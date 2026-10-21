@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://junglegym-mikage.github.io/suuhi-no-tobira/sitemap.xml
