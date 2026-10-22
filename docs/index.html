@@ -105,7 +105,7 @@ footer.site a{color:var(--ink-soft)}
 <div class="wrap">
   <header class="site">
     <a class="logo" href="#top">数秘のとびら<small>NUMEROLOGY</small></a>
-    <nav class="site"><a href="number/index.html">運命数の意味</a><a href="compat/index.html">相性</a><a href="#about">数秘術とは</a><a href="legal.html">特定商取引法に基づく表記</a></nav>
+    <nav class="site"><a href="number/index.html">運命数の意味</a><a href="compat/index.html">相性</a><a href="2026/index.html">2026年の運勢</a><a href="#about">数秘術とは</a><a href="legal.html">特定商取引法に基づく表記</a></nav>
   </header>
 
   <main id="top">
@@ -141,6 +141,7 @@ footer.site a{color:var(--ink-soft)}
           <h3>強みが活きる場面</h3><p id="r-strength"></p>
           <h3>気をつけたいこと</h3><p id="r-care"></p>
           <h3 id="r-year-h"></h3><p id="r-year"></p>
+          <p><a id="r-year-more" href="2026/index.html">2026年の恋愛・仕事・金運を読む →</a></p>
           <p><a id="r-more" href="number/index.html">恋愛・仕事・金運をくわしく読む →</a></p>
 
           <div class="locked">
@@ -284,7 +285,7 @@ $("diag").addEventListener("submit",e=>{
   $("r-calc").textContent=`${y}年${m}月${d}日 → ${lp.steps.join(" → ")}`;
   $("r-core").textContent=info.core;$("r-strength").textContent=info.strength;$("r-care").textContent=info.care;
   $("r-year-h").textContent=`${NOW_YEAR}年のあなた（個人年数 ${py}）`;$("r-year").textContent=YEARS[py];
-  $("r-more").href=`number/${lp.n}.html`;$("r-more").textContent=`運命数${lp.n}の恋愛・仕事・金運をくわしく読む →`;
+  $("r-more").href=`number/${lp.n}.html`;if(NOW_YEAR===2026){$("r-year-more").href=`2026/${py}.html`}else{$("r-year-more").hidden=true}$("r-more").textContent=`運命数${lp.n}の恋愛・仕事・金運をくわしく読む →`;
   strip.querySelectorAll("span").forEach(s=>s.classList.toggle("on",Number(s.dataset.n)===lp.n));
   try{localStorage.setItem("suuhi-birth",JSON.stringify({y,m,d}))}catch(_){}
   const r=$("result");r.hidden=false;r.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"});

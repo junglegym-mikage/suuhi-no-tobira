@@ -193,8 +193,47 @@ open(os.path.join(OUT, "compat", "index.html"), "w", encoding="utf-8").write(
     f'<h2>相性早見表</h2><p>◎は数秘術で相性がよいとされる組み合わせ。表の記号を押すと、その組み合わせの解説が開きます。</p>'
     f'<div class="grid"><table><tr><th></th>{head}</tr>{rows_c}</table></div>{FOOT_C}</div></body></html>\n')
 
+# 3c) 2026年の運勢（個人年数1〜9）
+from year_texts import YEAR_THEMES  # noqa: E402
+os.makedirs(os.path.join(OUT, "2026"), exist_ok=True)
+YNAV = lambda cur=None: '<div class="others">' + "".join(f'<a href="{n}.html"{" aria-current=\"page\"" if n == cur else ""}>{n}</a>' for n in range(1, 10)) + "</div>"
+YCALC = """<form class="calc" id="yf"><strong>あなたの2026年の個人年数を計算する</strong>
+<label>生まれた月 <input id="ym" inputmode="numeric" placeholder="8" maxlength="2" style="width:5em"></label>
+<label>生まれた日 <input id="yd" inputmode="numeric" placeholder="12" maxlength="2" style="width:5em"></label>
+<button type="submit">計算する</button><span id="ye" style="color:var(--seal)"></span></form>
+<script>
+document.getElementById('yf').addEventListener('submit',e=>{e.preventDefault();const m=+ym.value,d=+yd.value;
+if(!(m>=1&&m<=12&&d>=1&&d<=31)){ye.textContent='月と日を数字で入れてください';return}
+let n=[...String(m)+String(d)+'2026'].reduce((a,c)=>a+ +c,0);while(n>9)n=[...String(n)].reduce((a,c)=>a+ +c,0);
+location.href=n+'.html'});
+</script>"""
+for n, y in YEAR_THEMES.items():
+    title = f"2026年の運勢・個人年数{n}「{y['name']}」｜数秘術"
+    desc = f"数秘術で2026年の個人年数が{n}の人の運勢。テーマは「{y['name']}」（{y['kw']}）。恋愛・仕事・金運と、2026年にやるとよいことを解説します。"
+    tips = "".join(f"<li>{t}</li>" for t in y["tips"])
+    body = f"""<div class="wrap">
+<p class="crumb"><a href="../index.html">数秘のとびら</a> › <a href="index.html">2026年の運勢</a> › 個人年数{n}</p>
+<div class="head"><div class="big">{n}</div><div><h1>2026年は「{y['name']}」<br>個人年数{n}の運勢</h1><p class="kw">{y['kw']}</p></div></div>
+<p style="margin-top:16px">{y['overview']}</p>
+<h2>2026年の恋愛運</h2><p>{y['love']}</p>
+<h2>2026年の仕事運</h2><p>{y['work']}</p>
+<h2>2026年の金運</h2><p>{y['money']}</p>
+<h2>2026年にやるとよいこと</h2><ul>{tips}</ul>
+<div class="cta"><strong>月ごとの流れまで知りたい方へ</strong><p>「数秘術鑑定書」（PDF・約11ページ、1,980円）では、2026年・2027年の月ごとの運気カレンダーと、あなたの4つの数字からみる性格・恋愛・仕事を読み解きます。</p><a class="btn" href="https://suuhinotobira.stores.jp/items/6ad96e649e2872f0141245c3">鑑定書を見る</a> <a href="../index.html" style="margin-left:12px">まずは無料診断</a></div>
+<h2>ほかの個人年数</h2>{YNAV(n)}
+<p style="font-size:.8rem;color:var(--soft)">※個人年数は「誕生月＋誕生日＋その年の西暦」の数字をすべて足して一桁にした数字です。占いは人生の参考としてお楽しみください。</p>
+{FOOT}</div>"""
+    open(os.path.join(OUT, "2026", f"{n}.html"), "w", encoding="utf-8").write(
+        f'<!doctype html>\n<html lang="ja"><head>{META}<title>{title}｜数秘のとびら</title>{og(title, desc, f"2026/{n}.html")}{CSTYLE}</head><body>{body}</body></html>\n')
+yt, yd = "2026年の運勢｜数秘術の個人年数でみる1年", "数秘術の個人年数（パーソナルイヤー）でみる2026年の運勢。誕生月と誕生日から、あなたの2026年のテーマ・恋愛運・仕事運・金運がわかります。"
+rows_y = "".join(f'<h2><a href="{n}.html">個人年数{n}　{y["name"]}</a></h2><p>{y["kw"]}。{y["overview"][:60]}…</p>' for n, y in YEAR_THEMES.items())
+open(os.path.join(OUT, "2026", "index.html"), "w", encoding="utf-8").write(
+    f'<!doctype html>\n<html lang="ja"><head>{META}<title>{yt}｜数秘のとびら</title>{og(yt, yd, "2026/")}{CSTYLE}</head><body><div class="wrap">'
+    f'<p class="crumb"><a href="../index.html">数秘のとびら</a> › 2026年の運勢</p><h1 style="margin-top:16px">2026年の運勢</h1><p>{yd}</p>{YCALC}{YNAV()}{rows_y}{FOOT}</div></body></html>\n')
+year_urls = ["2026/"] + [f"2026/{n}.html" for n in range(1, 10)]
+
 # 4) サイトマップ・robots
-urls = ["", "number/", "compat/"] + [f"number/{n}.html" for n in ORDER] + compat_urls + ["legal.html", "privacy.html", "terms.html"]
+urls = ["", "number/", "compat/"] + [f"number/{n}.html" for n in ORDER] + compat_urls + year_urls + ["legal.html", "privacy.html", "terms.html"]
 open(os.path.join(OUT, "sitemap.xml"), "w", encoding="utf-8").write(
     '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
     + "".join(f"  <url><loc>{SITE}/{u}</loc></url>\n" for u in urls) + "</urlset>\n")
