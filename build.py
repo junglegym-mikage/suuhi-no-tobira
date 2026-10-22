@@ -243,6 +243,9 @@ open(os.path.join(OUT, ".nojekyll"), "w").write("")
 if os.path.isdir(os.path.join(ROOT, "docs", "samples")) and not os.path.isdir(os.path.join(OUT, "samples")):
     shutil.copytree(os.path.join(ROOT, "docs", "samples"), os.path.join(OUT, "samples"))
 OLD = os.path.join(ROOT, "docs")
+import glob
+for g in glob.glob(os.path.join(OLD, "google*.html")):
+    shutil.copy(g, OUT)
 for u in urls + ["sitemap.xml"]:
     if u.endswith(".xml"): continue
     path = os.path.join(OLD, u if u and not u.endswith("/") else (u + "index.html"))
