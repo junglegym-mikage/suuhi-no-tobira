@@ -80,6 +80,7 @@ for n, d in NUMBERS.items():
     desc = f"数秘術の運命数{n}（{d['kw']}）の性格、恋愛傾向、向いている仕事、金運、相性のよい数字を解説します。"
     master = "（マスターナンバー）" if n in (11, 22, 33) else ""
     compat = "・".join(str(c) for c in d["compat"])
+    cl = "・".join(f'<a href="../compat/{min(n,m)}-{max(n,m)}.html">{m}</a>' for m in ORDER)
     body = f"""<div class="wrap">
 <p class="crumb"><a href="../index.html">数秘のとびら</a> › <a href="index.html">運命数の意味</a> › 運命数{n}</p>
 <div class="head"><div class="big">{n}</div><div><h1>運命数{n}{master}<br>{d['name']}</h1><p class="kw">{d['kw']}</p></div></div>
@@ -91,6 +92,7 @@ for n, d in NUMBERS.items():
 <h2>運命数{n}の金運</h2><p>{d['money']}</p>
 <h2>運命数{n}の人へのメッセージ</h2><p>{d['advice']}</p>
 <div class="cta"><strong>あなたの運命数は？</strong><p>生年月日を入れるだけで、運命数と2026年の流れがわかります。登録不要・無料です。</p><a class="btn" href="../index.html">無料で診断する</a></div>
+<h2>運命数{n}と他の数字の相性</h2><p>{cl}</p>
 <h2>ほかの運命数を見る</h2>{others(n)}
 {FOOT}</div>"""
     open(os.path.join(OUT, "number", f"{n}.html"), "w", encoding="utf-8").write(
@@ -107,8 +109,92 @@ open(os.path.join(OUT, "number", "index.html"), "w", encoding="utf-8").write(
     '<div class="cta"><strong>自分の運命数を知りたい方へ</strong><p>生年月日を入れるだけで自動で計算します。</p><a class="btn" href="../index.html">無料で診断する</a></div>'
     f'{FOOT}</div></body></html>\n')
 
+# 3b) 運命数どうしの相性ページ（78ペア）
+from compat_texts import TRAITS  # noqa: E402
+os.makedirs(os.path.join(OUT, "compat"), exist_ok=True)
+FOOT_C = FOOT
+CSTYLE = STYLE.replace("</style>", """
+.pair{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding-block:20px 12px;border-bottom:1px solid var(--line)}
+.pair .big{font-size:5.5rem}
+.pair .x{font-size:2rem;color:var(--soft)}
+.badge{display:inline-block;font-family:"Shippori Mincho B1",serif;font-weight:800;font-size:1.05rem;padding:2px 12px;border:1px solid var(--gold);color:var(--gold)}
+.grid{overflow-x:auto;margin-top:8px}
+.grid table{border-collapse:collapse;font-variant-numeric:tabular-nums}
+.grid th,.grid td{border:1px solid var(--line);padding:6px 8px;text-align:center;min-width:2.4rem}
+.grid th{color:var(--soft);font-weight:500}
+.grid a{text-decoration:none;font-weight:700}
+.calc{background:var(--card);border:1px solid var(--line);padding:16px;margin-top:16px;display:grid;gap:8px}
+.calc input{font:inherit;padding:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink);width:10em}
+.calc button{font:inherit;font-weight:700;background:var(--ink);color:var(--paper);border:0;padding:10px 16px;cursor:pointer;justify-self:start}
+</style>""")
+
+def level(a, b):
+    if a == b: return ("似た者同士", "同じ数字どうし。考え方や大切にしているものが近く、言葉にしなくても通じ合いやすい組み合わせです。そのぶん、苦手なことも同じになりやすいので、補い合う工夫がポイントです。")
+    if b in NUMBERS[a]["compat"] or a in NUMBERS[b]["compat"]: return ("好相性", "数秘術で相性がよいとされる組み合わせです。お互いの持ち味が自然にかみ合い、一緒にいると心地よさを感じやすいでしょう。")
+    ta, tb = TRAITS[a], TRAITS[b]
+    if ta["style"] == tb["style"]: return ("共感しやすい", "物事の進め方が似ている組み合わせです。価値観をわかり合いやすく、同じ目標に向かうと力を発揮します。")
+    if ta["pace"] != tb["pace"]: return ("補い合う", "ペースが違うふたり。最初はテンポの違いに戸惑うこともありますが、互いにないものを持っているので、うまくかみ合うと心強いパートナーになります。")
+    return ("刺激し合う", "大切にしているものが少し違う組み合わせです。違いが新鮮な刺激になり、相手から学べることが多い関係です。")
+
+def pair_page(a, b):
+    A, B, ta, tb = NUMBERS[a], NUMBERS[b], TRAITS[a], TRAITS[b]
+    lv, lvtxt = level(a, b)
+    title = f"運命数{a}と運命数{b}の相性｜恋愛・友情・仕事"
+    desc = f"数秘術で運命数{a}（{A['name']}）と運命数{b}（{B['name']}）の相性を解説。ふたりの関係のよいところ、すれ違いやすいところ、うまくいくコツを紹介します。"
+    if a == b:
+        good = f"ふたりとも{ta['give']}を持っています。同じものを大切にできるので、一緒にいて安心しやすい関係です。"
+        bad = f"どちらにも{ta['clash']}があります。同じ場面で同じように行き詰まりやすいので、どちらかが一歩引く役を意識すると楽になります。"
+        tips = f"<li>相手に対しては「{ta['tip']}」が基本です。</li><li>得意なことが重なるぶん、苦手な作業は外の力を借りるのも手です。</li>"
+    else:
+        good = f"運命数{a}の{ta['give']}と、運命数{b}の{tb['give']}。それぞれが相手にないものを持ち寄れるのが、この組み合わせのよさです。運命数{a}の人は{ta['need']}を、運命数{b}の人は{tb['need']}を求めているので、そこを満たし合えると関係が深まります。"
+        bad = f"運命数{a}の{ta['clash']}と、運命数{b}の{tb['clash']}がぶつかると、すれ違いが起きやすくなります。どちらが悪いということではなく、もともとの性質の違いだと知っておくだけで、受けとめ方が変わります。"
+        tips = f"<li>運命数{a}の人は、相手に対して「{tb['tip']}」を意識してみて。</li><li>運命数{b}の人は、相手に対して「{ta['tip']}」を意識してみて。</li>"
+    love = f"恋愛では、運命数{a}の「{A['kw'].split('・')[0]}」と運命数{b}の「{B['kw'].split('・')[0]}」がどう重なるかがポイント。相手が大事にしているもの（{tb['need']}／{ta['need']}）を尊重すると、長く続く関係になりやすいでしょう。"
+    work = f"仕事では、運命数{a}は{ta['give']}、運命数{b}は{tb['give']}を活かせる役割分担がおすすめです。"
+    nav = f'<p>運命数{a}の相手：' + "・".join(f'<a href="{min(a,n)}-{max(a,n)}.html">{n}</a>' for n in ORDER) + '</p>'
+    body = f"""<div class="wrap">
+<p class="crumb"><a href="../index.html">数秘のとびら</a> › <a href="index.html">運命数の相性</a> › {a}と{b}</p>
+<div class="pair"><span class="big">{a}</span><span class="x">×</span><span class="big">{b}</span><div><h1>運命数{a}と運命数{b}の相性</h1><span class="badge">{lv}</span></div></div>
+<p style="margin-top:16px">{lvtxt}</p>
+<dl class="facts"><dt>運命数{a}</dt><dd><a href="../number/{a}.html">{A['name']}</a>（{A['kw']}）</dd><dt>運命数{b}</dt><dd><a href="../number/{b}.html">{B['name']}</a>（{B['kw']}）</dd></dl>
+<h2>ふたりの関係のよいところ</h2><p>{good}</p>
+<h2>すれ違いやすいところ</h2><p>{bad}</p>
+<h2>うまくいくコツ</h2><ul>{tips}</ul>
+<h2>恋愛・結婚</h2><p>{love}</p>
+<h2>仕事・友情</h2><p>{work}</p>
+<div class="cta"><strong>まずは自分の数字から</strong><p>生年月日を入れるだけで、あなたの運命数と2026年の流れがわかります。登録不要・無料です。</p><a class="btn" href="../index.html">無料で診断する</a></div>
+<h2>ほかの組み合わせ</h2>{nav}<p><a href="index.html">相性の一覧表を見る</a></p>
+<p style="font-size:.8rem;color:var(--soft)">※相性は数秘術にもとづく読み物です。ふたりの関係を考えるきっかけとしてお楽しみください。</p>
+{FOOT_C}</div>"""
+    open(os.path.join(OUT, "compat", f"{a}-{b}.html"), "w", encoding="utf-8").write(
+        f'<!doctype html>\n<html lang="ja"><head>{META}<title>{title}｜数秘のとびら</title>{og(title, desc, f"compat/{a}-{b}.html")}{CSTYLE}</head><body>{body}</body></html>\n')
+
+compat_urls = []
+for i, a in enumerate(ORDER):
+    for b in ORDER[i:]:
+        pair_page(a, b); compat_urls.append(f"compat/{a}-{b}.html")
+
+head = "".join(f"<th>{n}</th>" for n in ORDER)
+rows_c = "".join("<tr><th>%d</th>%s</tr>" % (a, "".join(f'<td><a href="{min(a,b)}-{max(a,b)}.html" title="{level(a,b)[0]}">{"◎" if level(a,b)[0]=="好相性" else "○"}</a></td>' for b in ORDER)) for a in ORDER)
+ct, cd = "運命数の相性一覧", "数秘術の運命数1〜9・11・22・33、全78通りの組み合わせの相性を一覧で紹介。ふたりの生年月日から相性ページを開けます。"
+calc = """<form class="calc" id="pf"><strong>ふたりの生年月日から相性を見る</strong>
+<label>あなた <input id="d1" inputmode="numeric" placeholder="19960812" maxlength="8"></label>
+<label>お相手 <input id="d2" inputmode="numeric" placeholder="19940305" maxlength="8"></label>
+<button type="submit">相性を見る</button><span id="pe" style="color:var(--seal)"></span></form>
+<script>
+const M=new Set([11,22,33]);const lp=s=>{let n=[...s].reduce((a,c)=>a+ +c,0);while(n>9&&!M.has(n))n=[...String(n)].reduce((a,c)=>a+ +c,0);return n};
+document.getElementById('pf').addEventListener('submit',e=>{e.preventDefault();const a=d1.value.trim(),b=d2.value.trim();
+if(!/^\\d{8}$/.test(a)||!/^\\d{8}$/.test(b)){pe.textContent='生年月日を8桁の数字で入れてください（例 19960812）';return}
+const x=lp(a),y=lp(b);location.href=Math.min(x,y)+'-'+Math.max(x,y)+'.html'});
+</script>"""
+open(os.path.join(OUT, "compat", "index.html"), "w", encoding="utf-8").write(
+    f'<!doctype html>\n<html lang="ja"><head>{META}<title>{ct}｜数秘のとびら</title>{og(ct, cd, "compat/")}{CSTYLE}</head><body><div class="wrap">'
+    f'<p class="crumb"><a href="../index.html">数秘のとびら</a> › 運命数の相性</p><h1 style="margin-top:16px">{ct}</h1><p>{cd}</p>{calc}'
+    f'<h2>相性早見表</h2><p>◎は数秘術で相性がよいとされる組み合わせ。表の記号を押すと、その組み合わせの解説が開きます。</p>'
+    f'<div class="grid"><table><tr><th></th>{head}</tr>{rows_c}</table></div>{FOOT_C}</div></body></html>\n')
+
 # 4) サイトマップ・robots
-urls = ["", "number/"] + [f"number/{n}.html" for n in ORDER] + ["legal.html", "privacy.html", "terms.html"]
+urls = ["", "number/", "compat/"] + [f"number/{n}.html" for n in ORDER] + compat_urls + ["legal.html", "privacy.html", "terms.html"]
 open(os.path.join(OUT, "sitemap.xml"), "w", encoding="utf-8").write(
     '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
     + "".join(f"  <url><loc>{SITE}/{u}</loc></url>\n" for u in urls) + "</urlset>\n")
