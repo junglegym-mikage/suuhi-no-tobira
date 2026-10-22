@@ -2,7 +2,7 @@
 
 ## アカウント
 - Instagram / Threads: **@suuhi_tobira**（違うアカウントなら何もせず止める。例: mikage_decision_lab はジムの別アカウントなので絶対に使わない）
-- サイト: https://junglegym-mikage.github.io/suuhi-no-tobira/
+- サイト: https://suuhi-tobira.github.io/
 - 決済: STORES ネットショップ https://suuhinotobira.stores.jp/ （鑑定書 https://suuhinotobira.stores.jp/items/6ad96e649e2872f0141245c3 ）。Stripeは占いが禁止業種のため使わない。
 
 ## Instagram フィード（1日3回：6:38・12:38・20:38 に自動実行）

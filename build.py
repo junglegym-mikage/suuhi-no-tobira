@@ -6,8 +6,8 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(ROOT, "content"))
 from number_texts import NUMBERS  # noqa: E402
 
-SITE = "https://junglegym-mikage.github.io/suuhi-no-tobira"
-SRC, OUT = os.path.join(ROOT, "src"), os.path.join(ROOT, "docs")
+SITE = "https://suuhi-tobira.github.io"
+SRC, OUT = os.path.join(ROOT, "src"), os.path.join(ROOT, "site")  # 新サイト（suuhi-tobira.github.io）の出力先
 os.makedirs(os.path.join(OUT, "number"), exist_ok=True)
 
 META = '<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">'
@@ -239,4 +239,22 @@ open(os.path.join(OUT, "sitemap.xml"), "w", encoding="utf-8").write(
     + "".join(f"  <url><loc>{SITE}/{u}</loc></url>\n" for u in urls) + "</urlset>\n")
 open(os.path.join(OUT, "robots.txt"), "w").write(f"User-agent: *\nAllow: /\nSitemap: {SITE}/sitemap.xml\n")
 open(os.path.join(OUT, ".nojekyll"), "w").write("")
-print("built:", len(urls), "pages")
+# 5) サンプル画像を新サイトへ、旧URL（docs/）は新URLへの転送ページにする
+if os.path.isdir(os.path.join(ROOT, "docs", "samples")) and not os.path.isdir(os.path.join(OUT, "samples")):
+    shutil.copytree(os.path.join(ROOT, "docs", "samples"), os.path.join(OUT, "samples"))
+OLD = os.path.join(ROOT, "docs")
+for u in urls + ["sitemap.xml"]:
+    if u.endswith(".xml"): continue
+    path = os.path.join(OLD, u if u and not u.endswith("/") else (u + "index.html"))
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    dest = f"{SITE}/{u}"
+    open(path, "w", encoding="utf-8").write(
+        f'<!doctype html><html lang="ja"><head><meta charset="utf-8"><title>数秘のとびら（移転しました）</title>'
+        f'<link rel="canonical" href="{dest}"><meta http-equiv="refresh" content="0; url={dest}">'
+        f'<meta name="robots" content="noindex"></head><body><p>数秘のとびらは <a href="{dest}">{dest}</a> に移転しました。</p>'
+        f'<script>location.replace({dest!r}+location.hash)</script></body></html>\n')
+open(os.path.join(OLD, "robots.txt"), "w").write("User-agent: *\nAllow: /\n")
+for f in ("sitemap.xml",):
+    fp = os.path.join(OLD, f)
+    if os.path.exists(fp): os.remove(fp)
+print("built:", len(urls), "pages (site/) + redirects (docs/)")

@@ -1,3 +1,4 @@
 report/*.pdf
 __pycache__/
 sns/
+site/
