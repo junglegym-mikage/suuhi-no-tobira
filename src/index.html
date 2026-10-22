@@ -73,6 +73,8 @@ button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible{ou
 .locked h3{border:0;margin-top:0}
 .locked ul{margin:8px 0 16px;padding-left:1.2em}
 .locked li{margin-bottom:4px}
+.samples{display:flex;gap:8px;overflow-x:auto;padding-block:8px;margin-bottom:4px}
+.samples img{width:132px;height:auto;flex:0 0 auto;border:1px solid var(--line);background:#fff}
 .price{font-family:var(--f-display);font-size:1.4rem;font-weight:700}
 .price small{font-size:.8rem;font-weight:500;color:var(--ink-soft)}
 .buy{display:inline-block;margin-top:8px;font-family:var(--f-display);font-weight:700;letter-spacing:.15em;background:var(--seal);color:#fff;text-decoration:none;padding:12px 20px;border-radius:2px}
@@ -138,8 +140,15 @@ footer.site a{color:var(--ink-soft)}
           <p><a id="r-more" href="number/index.html">恋愛・仕事・金運をくわしく読む →</a></p>
 
           <div class="locked">
-            <h3>詳しい鑑定書（PDF・約12ページ）</h3>
+            <h3>詳しい鑑定書（PDF・約11ページ）</h3>
             <p>無料診断の先にある、あなただけの読み解きをお届けします。</p>
+            <div class="samples" aria-label="鑑定書の見本">
+              <img src="samples/report-01.jpg" alt="鑑定書の見本：表紙" loading="lazy" width="350" height="496">
+              <img src="samples/report-02.jpg" alt="鑑定書の見本：4つの数字" loading="lazy" width="350" height="496">
+              <img src="samples/report-03.jpg" alt="鑑定書の見本：運命数の解説" loading="lazy" width="350" height="496">
+              <img src="samples/report-04.jpg" alt="鑑定書の見本：誕生数・表現数・ソウル数" loading="lazy" width="350" height="496">
+            </div>
+            <p class="note">見本（架空の人物で作成）。実際はあなたの生年月日とお名前で作成します。</p>
             <ul>
               <li>運命数・誕生数・表現数・ソウル数の4つの数字からみる性格の全体像</li>
               <li>恋愛・結婚で惹かれやすい相手と、相性のよい数字</li>
@@ -149,6 +158,18 @@ footer.site a{color:var(--ink-soft)}
             <div class="price">1,980円 <small>（税込）</small></div>
             <a class="buy" id="buy" href="#" aria-disabled="true">鑑定書を申し込む（準備中）</a>
             <p class="note">ただいま決済方法を切り替えています。再開まで少しお待ちください。</p>
+          </div>
+          <div class="locked">
+            <h3>ふたりの相性鑑定書（PDF・約8ページ）</h3>
+            <p>恋人・夫婦・友人・仕事仲間。おふたりの生年月日とお名前から、関係のよいところ、すれ違いやすいところ、うまくいくコツを読み解きます。</p>
+            <div class="samples" aria-label="相性鑑定書の見本">
+              <img src="samples/pair-1.jpg" alt="相性鑑定書の見本：表紙" loading="lazy" width="350" height="496">
+              <img src="samples/pair-2.jpg" alt="相性鑑定書の見本：ふたりの数字" loading="lazy" width="350" height="496">
+              <img src="samples/pair-4.jpg" alt="相性鑑定書の見本：ふたりの関係" loading="lazy" width="350" height="496">
+            </div>
+            <div class="price">2,980円 <small>（税込）</small></div>
+            <a class="buy" href="https://suuhinotobira.stores.jp/items/6ad97e7c10a5c693044ffbde">相性鑑定書を申し込む</a>
+            <p class="note">STORESのショップでお申し込みいただけます。備考欄におふたりの生年月日とお名前のローマ字をご記入ください。</p>
           </div>
         </div>
       </div>

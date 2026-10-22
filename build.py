@@ -162,7 +162,7 @@ def pair_page(a, b):
 <h2>うまくいくコツ</h2><ul>{tips}</ul>
 <h2>恋愛・結婚</h2><p>{love}</p>
 <h2>仕事・友情</h2><p>{work}</p>
-<div class="cta"><strong>まずは自分の数字から</strong><p>生年月日を入れるだけで、あなたの運命数と2026年の流れがわかります。登録不要・無料です。</p><a class="btn" href="../index.html">無料で診断する</a></div>
+<div class="cta"><strong>ふたりの相性を、もっと詳しく</strong><p>運命数だけでなく、誕生数・表現数・ソウル数も使って、おふたりの関係を読み解く「ふたりの相性鑑定書」（PDF・約8ページ、2,980円）をご用意しています。</p><a class="btn" href="https://suuhinotobira.stores.jp/items/6ad97e7c10a5c693044ffbde">相性鑑定書を見る</a> <a href="../index.html" style="margin-left:12px">まずは無料で自分の数字を調べる</a></div>
 <h2>ほかの組み合わせ</h2>{nav}<p><a href="index.html">相性の一覧表を見る</a></p>
 <p style="font-size:.8rem;color:var(--soft)">※相性は数秘術にもとづく読み物です。ふたりの関係を考えるきっかけとしてお楽しみください。</p>
 {FOOT_C}</div>"""
