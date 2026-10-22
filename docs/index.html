@@ -152,7 +152,7 @@ footer.site a{color:var(--ink-soft)}
             </ul>
             <div class="price">1,980円 <small>（税込）</small></div>
             <a class="buy" id="buy" href="#" aria-disabled="true">鑑定書を申し込む（準備中）</a>
-            <p class="note">決済の準備が整い次第、お申し込みいただけます。</p>
+            <p class="note">ただいま決済方法を切り替えています。再開まで少しお待ちください。</p>
           </div>
         </div>
       </div>
@@ -272,7 +272,7 @@ $("diag").addEventListener("submit",e=>{
 (function(){let s=null;try{s=JSON.parse(localStorage.getItem("suuhi-birth"))}catch(_){}
   s=s||{y:1996,m:8,d:12};$("y").value=s.y;mSel.value=s.m;fillDays();dSel.value=s.d;})();
 // 決済リンクが設定されたら有効化
-const PAYMENT_LINK="https://buy.stripe.com/aFa28tfcP3F4b5rfCvbMQ00";
+const PAYMENT_LINK="";
 if(PAYMENT_LINK){const b=$("buy");b.href=PAYMENT_LINK;b.removeAttribute("aria-disabled");b.textContent="鑑定書を申し込む";b.nextElementSibling.textContent="お支払いはStripeの安全な決済ページで行います。";}
 else{$("buy").addEventListener("click",e=>e.preventDefault())}
 </script>
