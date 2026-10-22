@@ -26,6 +26,22 @@ window.__igDraw = (spec) => {
   } else if (spec.type === 'year2026') {
     t(x, '誕生月＋誕生日＋2026 を一桁に', 110, 36, F.sans, C.soft); t(x, '2026年、あなたは何の年？', 165, 66, F.serif, C.ink, 'bold');
     ['始まりの年', '育てる年', '楽しむ年', '固める年', '動く年', 'つながる年', '深める年', '実る年', 'しめくくりの年'].forEach((s, i) => { const y = 300 + i * 66; t(x, String(i + 1), y, 52, F.serif, C.gold, 'bold', 350); t(x, s, y + 6, 46, F.serif, C.ink, 'bold', 420, 'left'); });
+  } else if (spec.type === 'today') {
+    x.fillStyle = C.ink; x.fillRect(0, 0, 1080, 1080); x.strokeStyle = '#3a4357'; x.lineWidth = 3; x.strokeRect(40, 40, 1000, 1000);
+    t(x, spec.label, 110, 42, F.sans, '#a9adb8'); t(x, '今日の数字', 175, 56, F.serif, '#ece6d8', 'bold');
+    t(x, String(spec.n), spec.n < 10 ? 250 : 290, spec.n < 10 ? 380 : 300, F.serif, '#d2ab5c', 'bold');
+    t(x, spec.title, 690, 72, F.serif, '#ece6d8', 'bold');
+    const m = spec.msg, cut = m.length > 22 ? m.indexOf('、') + 1 : m.length;
+    t(x, m.slice(0, cut), 800, 38, F.sans, '#ece6d8'); if (cut < m.length) t(x, m.slice(cut), 852, 38, F.sans, '#ece6d8');
+    t(x, '数秘のとびら', 950, 34, F.serif, '#d2ab5c', 'bold'); t(x, 'プロフのリンクから無料診断', 994, 26, F.sans, '#a9adb8');
+    return c;
+  } else if (spec.type === 'pair') {
+    t(x, '運命数の相性', 120, 46, F.serif, C.soft, 'bold');
+    const big = (spec.a >= 10 || spec.b >= 10) ? 230 : 300;
+    t(x, String(spec.a), 230, big, F.serif, C.gold, 'bold', 330); t(x, '×', 330, 90, F.serif, C.soft, '', 540); t(x, String(spec.b), 230, big, F.serif, C.gold, 'bold', 750);
+    t(x, `${spec.na} × ${spec.nb}`, 610, 50, F.serif, C.ink, 'bold');
+    x.strokeStyle = C.gold; x.lineWidth = 2; x.strokeRect(390, 700, 300, 76); t(x, spec.level, 714, 46, F.serif, C.gold, 'bold');
+    t(x, '全78通りの相性はプロフのリンクから', 830, 32, F.sans, C.seal);
   }
   footer(x); return c;
 };

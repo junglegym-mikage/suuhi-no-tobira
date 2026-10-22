@@ -5,13 +5,14 @@
 - サイト: https://junglegym-mikage.github.io/suuhi-no-tobira/
 - 決済: Stripe 支払いリンク https://buy.stripe.com/aFa28tfcP3F4b5rfCvbMQ00
 
-## Instagram フィード（毎日 21:00 ごろ）
-0. `ops/instagram_posts.json` の `posted` に今日（JST）の日付があれば、その日はすでに投稿済み。何もせず「本日分は投稿済み」とだけ報告して終了する（データ切れではない）。
-1. `ops/instagram_posts.json` の `posts` から今日（JST）の日付のエントリを探す。なければ投稿せず報告。
+## Instagram フィード（1日3回：6:38・12:38・20:38 に自動実行）
+`posts` は日付ごとに枠（"07" 朝・"12" 昼・"21" 夜）を持つ。実行した時刻（JST）で枠を決める：10時前→"07"、17時前→"12"、それ以降→"21"。
+0. `posted` に「今日の日付 + 枠」（例 "2026-10-22 21"）があれば投稿済み。何もせず「この枠は投稿済み」と報告して終了。プロフィールで同じ画像・キャプションがすでに出ていても二重投稿しない。
+1. `posts[今日の日付][枠]` を使う。その日の日付や枠が無ければ投稿せず「データ切れ（次の分の作成が必要）」と報告。
 2. Claude アプリの内蔵ブラウザで https://www.instagram.com/ を開く。
 3. `ops/ig_render.js` の中身を javascript_exec でそのまま実行（ページを再読み込みしたら再実行が必要）。
 4. `__igAccount()` が `/suuhi_tobira/` であることを確認。
-5. `await __igOpen()` → `await __igAttach(spec)`（spec は JSON のエントリそのもの）→ `await __igToCaption()`。
+5. `await __igOpen()` → `await __igAttach(spec)`（spec は posts[日付][枠] のオブジェクト）→ `await __igToCaption()`。
 6. computer の type アクションで `caption` をそのまま入力（JS での文字挿入は改行が崩れるので使わない）。
 7. `await __igShare()` が `shared` を返せば完了。
 
