@@ -28,3 +28,5 @@
 2. `report/make_report.py`で鑑定書PDFを作成：
    `python3 report/make_report.py --name "氏名" --romaji "ROMAJI" --birth YYYY-MM-DD`
 3. suuhitobira.info@gmail.com から購入者へPDFを添付して送信（決済から3営業日以内）。
+   相性鑑定書（2,980円 https://suuhinotobira.stores.jp/items/6ad97e7c10a5c693044ffbde ）の場合：
+   `python3 report/make_pair_report.py --name1 "氏名1" --romaji1 "ROMAJI1" --birth1 YYYY-MM-DD --name2 "氏名2" --romaji2 "ROMAJI2" --birth2 YYYY-MM-DD`
