@@ -6,6 +6,7 @@
 - 決済: Stripe 支払いリンク https://buy.stripe.com/aFa28tfcP3F4b5rfCvbMQ00
 
 ## Instagram フィード（毎日 21:00 ごろ）
+0. `ops/instagram_posts.json` の `posted` に今日（JST）の日付があれば、その日はすでに投稿済み。何もせず「本日分は投稿済み」とだけ報告して終了する（データ切れではない）。
 1. `ops/instagram_posts.json` の `posts` から今日（JST）の日付のエントリを探す。なければ投稿せず報告。
 2. Claude アプリの内蔵ブラウザで https://www.instagram.com/ を開く。
 3. `ops/ig_render.js` の中身を javascript_exec でそのまま実行（ページを再読み込みしたら再実行が必要）。
