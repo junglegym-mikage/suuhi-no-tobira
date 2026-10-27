@@ -1,6 +1,7 @@
 // 数秘のとびら Instagram投稿ヘルパー（instagram.com のページ内で javascript_exec に貼って使う）
 // 使い方: 1) このファイル全体を実行 → 2) await __igOpen() → 3) await __igAttach(spec)
-//        → 4) await __igToCaption() → 5) キャプションを入力 → 6) await __igShare()
+//        → 4) await __igToCaption() → 5) 欄を left_click してキャプションを type → 6) await __igShare()
+//        → 7) プロフィールで __igLatestId() / __igCaption(id) を使いキャプションが入ったか確認（RUNBOOK 参照）
 {
 window.__sleep = ms => new Promise(r => setTimeout(r, ms));
 window.__waitFor = async (fn, ms = 8000) => { const t = Date.now(); while (Date.now() - t < ms) { const v = fn(); if (v) return v; await __sleep(200); } return null; };
@@ -58,8 +59,16 @@ window.__igAttach = async (spec) => {
   return (await __waitFor(() => Array.from(document.querySelectorAll('[role=dialog] div,[role=dialog] span')).find(e => e.childElementCount === 0 && e.textContent.trim() === '次へ'))) ? 'attached' : 'attach failed';
 };
 const clickText = async (txt) => { const b = await __waitFor(() => Array.from(document.querySelectorAll('[role=dialog] div,[role=dialog] span,[role=dialog] button')).find(e => e.childElementCount === 0 && e.textContent.trim() === txt)); if (!b) return false; (b.closest('[role=button],button') || b).click(); await __sleep(1500); return true; };
-window.__igToCaption = async () => { await clickText('次へ'); await clickText('次へ'); const el = await __waitFor(() => document.querySelector('[role=dialog] div[contenteditable=true]')); if (!el) return 'no caption box'; el.focus(); return 'caption ready'; };
-window.__igShare = async () => { if (!(await clickText('シェア'))) return 'no share button'; const ok = await __waitFor(() => Array.from(document.querySelectorAll('span,div')).find(e => e.childElementCount === 0 && /シェアされました/.test(e.textContent)), 30000); return ok ? 'shared' : 'not confirmed'; };
+// 注意: JS の focus() だけでは Instagram の入力欄に文字が反映されず、キャプション空欄で投稿されることがある。
+// __igToCaption の後は必ず computer の left_click でキャプション欄を実際にクリックしてから type すること。
+window.__igToCaption = async () => { await clickText('次へ'); await clickText('次へ'); const el = await __waitFor(() => document.querySelector('[role=dialog] div[contenteditable=true]')); if (!el) return 'no caption box'; return 'caption ready（欄をクリックしてから入力）'; };
+window.__igShare = async () => { if (!(await clickText('シェア'))) return 'no share button'; const ok = await __waitFor(() => /シェアされました|シェアしました/.test(document.querySelector('[role=dialog]')?.innerText || ''), 30000); return ok ? 'shared' : 'not confirmed'; };
+// 投稿後の確認: 公開ページのキャプションを読む（id は投稿の /p/<id>/）。空なら '(empty)'。
+window.__igCaption = async (id) => { const h = await fetch('/p/' + id + '/', { cache: 'no-store' }).then(r => r.text()); const m = h.match(/<meta property="og:description" content="([^"]*)"/); const d = document.createElement('textarea'); d.innerHTML = m ? m[1] : ''; const v = d.value, i = v.indexOf(': "'); return i < 0 ? '(empty)' : v.slice(i + 3, v.lastIndexOf('"')); };
+// プロフィールページで最新投稿の id を返す
+window.__igLatestId = async () => { const a = await __waitFor(() => document.querySelector('a[href*="/p/"]')); return a ? a.getAttribute('href').split('/p/')[1].replace('/', '') : null; };
+// 投稿ページ（/p/<id>/）でキャプション編集画面を開く。開いたら欄を left_click → type → 「完了」を left_click。
+window.__igOpenEdit = async () => { const o = await __waitFor(() => document.querySelector('svg[aria-label="その他のオプション"]')); if (!o) return 'no options'; (o.closest('[role=button],button') || o).click(); await __sleep(1000); const e = Array.from(document.querySelectorAll('button,[role=button]')).find(b => b.textContent.trim() === '編集'); if (!e) return 'no edit'; e.click(); return (await __waitFor(() => document.querySelector('[role=dialog] div[contenteditable=true]'))) ? 'edit open' : 'no caption box'; };
 window.__igAccount = () => Array.from(document.querySelectorAll('a[href^="/"]')).map(a => a.getAttribute('href')).filter(h => /^\/[a-z0-9._]+\/$/.test(h) && !/^\/(explore|reels|notifications|direct)\/$/.test(h))[0] || null;
 }
 'ig helpers loaded';
