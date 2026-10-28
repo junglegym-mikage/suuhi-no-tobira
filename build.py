@@ -7,6 +7,7 @@ sys.path.insert(0, os.path.join(ROOT, "content"))
 from number_texts import NUMBERS  # noqa: E402
 
 SITE = "https://suuhi-tobira.github.io"
+GA_ID = ""  # Google アナリティクスの測定ID（例 "G-XXXXXXXXXX"）。入れてビルドすると全ページに計測タグが入る
 SRC, OUT = os.path.join(ROOT, "src"), os.path.join(ROOT, "site")  # 新サイト（suuhi-tobira.github.io）の出力先
 os.makedirs(os.path.join(OUT, "number"), exist_ok=True)
 
@@ -260,4 +261,13 @@ open(os.path.join(OLD, "robots.txt"), "w").write("User-agent: *\nAllow: /\n")
 for f in ("sitemap.xml",):
     fp = os.path.join(OLD, f)
     if os.path.exists(fp): os.remove(fp)
+# 6) アクセス計測タグ（GA_ID が入っているときだけ）。STORESへのクリックは GA4 の「離脱クリック」で自動計測される
+if GA_ID:
+    tag = (f'<script async src="https://www.googletagmanager.com/gtag/js?id={GA_ID}"></script>'
+           f"<script>window.dataLayer=window.dataLayer||[];function gtag(){{dataLayer.push(arguments)}}gtag('js',new Date());gtag('config','{GA_ID}');</script>")
+    for g in glob.glob(os.path.join(OUT, "**", "*.html"), recursive=True):
+        if os.path.basename(g).startswith("google"): continue
+        t = open(g, encoding="utf-8").read()
+        if "googletagmanager" not in t and "<head>" in t:
+            open(g, "w", encoding="utf-8").write(t.replace("<head>", "<head>" + tag, 1))
 print("built:", len(urls), "pages (site/) + redirects (docs/)")
