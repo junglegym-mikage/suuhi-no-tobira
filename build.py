@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.join(ROOT, "content"))
 from number_texts import NUMBERS  # noqa: E402
 
 SITE = "https://suuhi-tobira.github.io"
-GA_ID = ""  # Google アナリティクスの測定ID（例 "G-XXXXXXXXXX"）。入れてビルドすると全ページに計測タグが入る
+GA_ID = "G-8YJF5P338Z"  # Google アナリティクスの測定ID（例 "G-XXXXXXXXXX"）。入れてビルドすると全ページに計測タグが入る
 SRC, OUT = os.path.join(ROOT, "src"), os.path.join(ROOT, "site")  # 新サイト（suuhi-tobira.github.io）の出力先
 os.makedirs(os.path.join(OUT, "number"), exist_ok=True)
 
