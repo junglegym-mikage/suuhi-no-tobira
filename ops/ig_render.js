@@ -1,7 +1,11 @@
 // 数秘のとびら Instagram投稿ヘルパー（instagram.com のページ内で javascript_exec に貼って使う）
 // 使い方: 1) このファイル全体を実行 → 2) await __igOpen() → 3) await __igAttach(spec)
-//        → 4) await __igToCaption() → 5) 欄を left_click してキャプションを type → 6) await __igShare()
-//        → 7) プロフィールで __igLatestId() / __igCaption(id) を使いキャプションが入ったか確認（RUNBOOK 参照）
+//        → 4) await __igToCaption() → 5) 欄を left_click してキャプションを type
+//        → 6) __igCaptionValue() === caption を確認 → 7) await __igShare(caption)
+//        → 8) プロフィールで __igLatestId() / __igCaption(id) を使いキャプションが入ったか確認（RUNBOOK 参照）
+// 投稿画面は2種類ある（2026-10-30確認）。どちらでも動くようにしてある:
+//   A) ポップアップ（[role=dialog]、キャプション欄は contenteditable）
+//   B) ページ遷移（/create/style/ → /create/details/、キャプション欄は textarea、「次へ」「シェア」は右上の button）
 {
 window.__sleep = ms => new Promise(r => setTimeout(r, ms));
 window.__waitFor = async (fn, ms = 8000) => { const t = Date.now(); while (Date.now() - t < ms) { const v = fn(); if (v) return v; await __sleep(200); } return null; };
@@ -52,17 +56,33 @@ window.__igOpen = async () => {
   const sub = Array.from(document.querySelectorAll('span')).find(e => e.textContent.trim() === '投稿'); if (sub) (sub.closest('a,[role=button],button,[role=link]') || sub).click();
   return (await __waitFor(() => document.querySelector('input[type=file]'))) ? 'ok' : 'no file input';
 };
+// 「次へ」「シェア」などのボタンを探す（ポップアップがあればその中、無ければページ全体）
+const findBtn = (txt) => { const root = document.querySelector('[role=dialog]') || document; return Array.from(root.querySelectorAll('div,span,button')).find(e => e.childElementCount === 0 && e.textContent.trim() === txt) || null; };
+const clickText = async (txt, ms = 8000) => { const b = await __waitFor(() => findBtn(txt), ms); if (!b) return false; (b.closest('[role=button],button') || b).click(); await __sleep(1500); return true; };
+// キャプション欄（A: contenteditable / B: textarea）
+window.__igCaptionBox = () => document.querySelector('[role=dialog] div[contenteditable=true]') || document.querySelector('textarea[aria-label^="キャプション"]');
+window.__igCaptionValue = () => { const el = __igCaptionBox(); if (!el) return null; return el.tagName === 'TEXTAREA' ? el.value : el.innerText.replace(/\n$/, ''); };
 window.__igAttach = async (spec) => {
   const c = __igDraw(spec); const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.93));
-  const inp = document.querySelector('input[type=file]'); const dt = new DataTransfer(); dt.items.add(new File([blob], 'post.jpg', { type: 'image/jpeg' }));
+  const inp = document.querySelector('input[type=file]'); if (!inp) return 'no file input';
+  const dt = new DataTransfer(); dt.items.add(new File([blob], 'post.jpg', { type: 'image/jpeg' }));
   inp.files = dt.files; inp.dispatchEvent(new Event('change', { bubbles: true }));
-  return (await __waitFor(() => Array.from(document.querySelectorAll('[role=dialog] div,[role=dialog] span')).find(e => e.childElementCount === 0 && e.textContent.trim() === '次へ'))) ? 'attached' : 'attach failed';
+  return (await __waitFor(() => findBtn('次へ'), 10000)) ? 'attached' : 'attach failed';
 };
-const clickText = async (txt) => { const b = await __waitFor(() => Array.from(document.querySelectorAll('[role=dialog] div,[role=dialog] span,[role=dialog] button')).find(e => e.childElementCount === 0 && e.textContent.trim() === txt)); if (!b) return false; (b.closest('[role=button],button') || b).click(); await __sleep(1500); return true; };
 // 注意: JS の focus() だけでは Instagram の入力欄に文字が反映されず、キャプション空欄で投稿されることがある。
 // __igToCaption の後は必ず computer の left_click でキャプション欄を実際にクリックしてから type すること。
-window.__igToCaption = async () => { await clickText('次へ'); await clickText('次へ'); const el = await __waitFor(() => document.querySelector('[role=dialog] div[contenteditable=true]')); if (!el) return 'no caption box'; return 'caption ready（欄をクリックしてから入力）'; };
-window.__igShare = async () => { if (!(await clickText('シェア'))) return 'no share button'; const ok = await __waitFor(() => /シェアされました|シェアしました/.test(document.querySelector('[role=dialog]')?.innerText || ''), 30000); return ok ? 'shared' : 'not confirmed'; };
+// 欄の位置は screenshot で確認する（CSSピクセルとスクリーンショットの座標は一致しないことがある）。
+window.__igToCaption = async () => {
+  for (let i = 0; i < 3 && !__igCaptionBox(); i++) { if (!(await clickText('次へ'))) break; await __waitFor(() => __igCaptionBox(), 3000); }
+  return __igCaptionBox() ? 'caption ready（欄をクリックしてから入力）' : 'no caption box';
+};
+// expected を渡すと、欄の中身が一致しないときはシェアしない（空欄投稿の防止）
+window.__igShare = async (expected) => {
+  if (expected != null) { const v = __igCaptionValue(); if (v !== expected) return 'caption mismatch（シェアしていません）: ' + (v == null ? 'no box' : v.length + '/' + expected.length + '文字'); }
+  if (!(await clickText('シェア'))) return 'no share button';
+  const ok = await __waitFor(() => /シェアされました|シェアしました|投稿されました/.test(document.body.innerText) || !/\/create\//.test(location.pathname) && !document.querySelector('[role=dialog]'), 30000);
+  return ok ? 'shared' : 'not confirmed';
+};
 // 投稿後の確認: 公開ページのキャプションを読む（id は投稿の /p/<id>/）。空なら '(empty)'。
 window.__igCaption = async (id) => { const h = await fetch('/p/' + id + '/', { cache: 'no-store' }).then(r => r.text()); const m = h.match(/<meta property="og:description" content="([^"]*)"/); const d = document.createElement('textarea'); d.innerHTML = m ? m[1] : ''; const v = d.value, i = v.indexOf(': "'); return i < 0 ? '(empty)' : v.slice(i + 3, v.lastIndexOf('"')); };
 // プロフィールページで最新投稿の id を返す
