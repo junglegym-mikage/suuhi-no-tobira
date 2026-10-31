@@ -83,7 +83,22 @@ function drawPick(x, spec, t) {
   }
   txt(x, '数秘のとびら', W / 2, 1680, 40, F.serif, K.gold, 'bold', 'center', 0.9);
 }
-window.__reelDraw = (x, spec, t) => { if (spec.type === 'chart') drawChart(x, spec, t); else if (spec.type === 'pick') drawPick(x, spec, t); };
+// type "slides": 文字の場面を順に見せる（説明リール用）
+// spec: { type:'slides', dur, top:'上に出し続ける見出し', topFrom:秒, scenes:[{at:秒, lines:[[文字, 大きさ, 色('ink'|'gold'|'soft'|'seal'), 'serif'|'sans'], ...]}, ...] }
+function drawSlides(x, spec, t) {
+  bg(x);
+  const sc = spec.scenes; let i = 0; while (i + 1 < sc.length && t >= sc[i + 1].at) i++;
+  const tin = t - sc[i].at, next = sc[i + 1], tout = next ? next.at - t : 99;
+  const a = (i === 0 ? 0.35 + 0.65 * ease(tin / 0.3) : ease(tin / 0.3)) * clamp(tout / 0.2), dy = (1 - ease(tin / 0.35)) * 40;
+  const L = sc[i].lines, gap = 34, hs = L.map(l => l[1] * 1.25), total = hs.reduce((p, h) => p + h, 0) + gap * (L.length - 1);
+  let y = 900 - total / 2 + dy;
+  L.forEach(([s, size, col, font], k) => { y += hs[k] / 2; txt(x, s, W / 2, y, size, font === 'sans' ? F.sans : F.serif, K[col] || K.ink, 'bold', 'center', a); y += hs[k] / 2 + gap; });
+  if (spec.top && t >= spec.topFrom) txt(x, spec.top, W / 2, 230, 52, F.serif, K.gold, 'bold', 'center', ease((t - spec.topFrom) / 0.3));
+  // 進み具合の点
+  sc.forEach((_, k) => { x.globalAlpha = k === i ? 1 : 0.3; x.fillStyle = K.gold; x.beginPath(); x.arc(W / 2 + (k - (sc.length - 1) / 2) * 34, 1500, 8, 0, Math.PI * 2); x.fill(); x.globalAlpha = 1; });
+  txt(x, '数秘のとびら', W / 2, 1620, 40, F.serif, K.gold, 'bold', 'center', 0.9);
+}
+window.__reelDraw = (x, spec, t) => { if (spec.type === 'chart') drawChart(x, spec, t); else if (spec.type === 'pick') drawPick(x, spec, t); else if (spec.type === 'slides') drawSlides(x, spec, t); };
 window.__reelCanvas = () => { let c = window.__rc; if (!c) { c = window.__rc = document.createElement('canvas'); c.width = W; c.height = H; } return c; };
 // 指定秒のコマを画面右上に小さく表示（確認用）。もう一度呼ぶと差し替え、null で消す。
 window.__reelPreview = (sec, spec = window.__reelSpec) => {
