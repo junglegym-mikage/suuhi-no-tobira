@@ -19,6 +19,20 @@
    - `(empty)` や不一致なら、`https://www.instagram.com/p/<id>/` を開き、ig_render.js を再実行 → `await __igOpenEdit()` → 欄を left_click → type で `caption` を入力 → 数秒待って「完了」を left_click → もう一度 `__igCaption(id)` で確認。
    - 投稿し直し（削除・再投稿）はしない。
 
+## Instagram リール（1日1本：18:47 に自動実行）
+データは `ops/instagram_reels.json` の `reels[日付]`（1日1本）。`posted[日付]` があるか、`/suuhi_tobira/reels/` の最新リールのキャプションがその日の `caption` と同じなら投稿済みなので何もしない（二重投稿しない）。その日のデータが無ければ「リールのデータ切れ」と報告して終了。
+1. https://www.instagram.com/suuhi_tobira/ を開く。**resize_window で 1200x900 にしてから**ページを開き直す（内蔵ブラウザの幅が狭いと「シェア」「完了」が画面外に出て、キャプションが空で投稿される。2026-10-31 に発生）。
+2. `ops/ig_render.js` と `ops/ig_reel.js` を javascript_exec でそのまま実行。`__igAccount()` が `/suuhi_tobira/` か確認（違えば何もせず報告）。
+3. `__reelStart(spec)`（spec は reels[日付] のオブジェクト）→ `__reelStatus()` を `done: true` になるまで確認（数十秒〜3分。`err` が出たり進まなくなったら、ページを開き直して 2 からやり直す）。`duration` が spec.dur と同じ、`w`=1080・`h`=1920 であること。
+4. `await __igOpen()` → `await __reelAttach()`（動画用のファイル欄を使う。先頭の input はプロフィール写真用なので使わない）。
+5. 「動画投稿はリール動画としてシェアされるようになりました」が出たら OK を押す。
+6. 切り取り画面で左下の比率ボタン → **「元の比率」**を選ぶ（選ばないと正方形に切られる）。→ `__clickText` 相当で「次へ」。
+7. 編集画面で、カバー写真の白枠を右端近くまでドラッグして、全部の数字が出ているコマを選ぶ。→「次へ」。
+8. キャプション欄を left_click → type で `caption` を入力 → 数秒待ち、`__igCaptionValue() === caption` を確認。Facebook へのシェアと AIラベルはオフのまま。→ 画面の「シェア」を left_click。「リール動画がシェアされました」が出れば完了。
+9. **キャプションの確認（必須）**：`/suuhi_tobira/reels/` で最新リールの id を取り、`__igCaption(id)` が `caption` と一致するか確認。空なら `https://www.instagram.com/p/<id>/` で `__igOpenEdit()` → 欄を left_click → type → 「完了」を left_click（1200x900 のまま）→ もう一度確認。削除・再投稿はしない。
+10. 最後に resize_window の preset "desktop" で表示を戻す。
+- BGM：ウェブ版の Instagram ではリールに音楽を付けられない（無音で投稿される）。音を付けたいときはオーナーがスマホアプリで付ける。
+
 ## 投稿文のルール（販売導線）
 - 投稿文の最後（ハッシュタグの前）に、鑑定書の案内を1行入れる（今日の数字・運命数カード・個人年数→「数秘術鑑定書（PDF・1,980円）」、相性→「ふたりの相性鑑定書（PDF・2,980円）」。「プロフのリンクから」で締める）。押し売りの言い回しにしない。
 - 売上の確認は STORES 管理画面（注文・レポート）で行う。Stripe は使っていない。

@@ -1,0 +1,176 @@
+// 数秘のとびら Instagramリール作成ヘルパー（instagram.com のページ内で javascript_exec に貼って使う）
+// 使い方: 1) このファイル全体を実行 → 2) __reelPreview(秒, spec) で描画を確認（任意）→ 3) __reelStart(spec) → __reelStatus().done まで待つ
+//        → 4) await __reelCheck(秒) で動画のコマを確認（任意）→ 5) ig_render.js の __igOpen() → await __reelAttach() → 以降は RUNBOOK のリール手順
+// （クラウドで見本を作るときは node ops/reel_render.js spec.json out.mp4 。同じ __reelDraw を使う）
+{
+const W = 1080, H = 1920, FPS = 30;
+const F = { serif: '"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP","Noto Serif CJK JP",serif', sans: '"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans CJK JP",sans-serif' };
+const K = { bg: '#1d2433', bg2: '#262f43', ink: '#ece6d8', soft: '#a9adb8', gold: '#d2ab5c', seal: '#e07a62', line: '#3a4357' };
+const clamp = (v) => Math.max(0, Math.min(1, v));
+const ease = (v) => 1 - Math.pow(1 - clamp(v), 3);
+const pop = (v) => { v = clamp(v); return v < 1 ? 1 + 2.2 * Math.pow(v - 1, 3) + 1.2 * Math.pow(v - 1, 2) : 1; };
+function txt(x, s, px, py, size, font, color, weight = '', align = 'center', alpha = 1) {
+  x.globalAlpha = alpha; x.font = `${weight} ${size}px ${font}`; x.fillStyle = color; x.textAlign = align; x.textBaseline = 'middle'; x.fillText(s, px, py); x.globalAlpha = 1;
+}
+function bg(x) {
+  const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, K.bg2); g.addColorStop(1, K.bg); x.fillStyle = g; x.fillRect(0, 0, W, H);
+  x.strokeStyle = K.line; x.lineWidth = 3; x.strokeRect(40, 40, W - 80, H - 80);
+}
+// type "chart": 運命数ごとの相性早見（rows: [[数字, 名前, [相性の数字...]], ...]）
+function drawChart(x, spec, t) {
+  bg(x);
+  // 0〜2秒: 画面中央にフック → 2〜2.6秒で上へ移動
+  const m = ease((t - 2.0) / 0.6), hy = 760 + (240 - 760) * m, hs = 1 - 0.42 * m, hin = 0.35 + 0.65 * ease(t / 0.3);
+  x.save(); x.translate(W / 2, hy); x.scale(hs * (0.85 + 0.15 * hin), hs * (0.85 + 0.15 * hin));
+  txt(x, spec.hook1, 0, -150, 64, F.sans, K.soft, 'bold', 'center', hin);
+  txt(x, spec.hook2, 0, 0, 120, F.serif, K.ink, 'bold', 'center', hin);
+  txt(x, spec.hook3, 0, 150, 120, F.serif, K.gold, 'bold', 'center', hin);
+  x.restore();
+  const subA = clamp((t - 0.5) / 0.3) * (1 - m);
+  txt(x, spec.sub, W / 2, 1080, 46, F.sans, K.seal, 'bold', 'center', subA);
+  txt(x, '↓ 自分の数字で止めてね', W / 2, 1180, 42, F.sans, K.soft, '', 'center', subA * (0.6 + 0.4 * Math.sin(t * 8)));
+  // 2.4秒〜: 行が順番に出る
+  const top = 480, step = 74;
+  spec.rows.forEach(([n, name, comp], i) => {
+    const t0 = 2.4 + i * 0.28, a = clamp((t - t0) / 0.25); if (a <= 0) return;
+    const y = top + i * step, s = pop((t - t0) / 0.35);
+    if (i % 2 === 0) { x.globalAlpha = 0.35 * a; x.fillStyle = K.line; x.fillRect(90, y - step / 2 + 4, W - 180, step - 8); x.globalAlpha = 1; }
+    x.save(); x.translate(200, y); x.scale(s, s); txt(x, String(n), 0, 0, 60, F.serif, K.gold, 'bold', 'center', a); x.restore();
+    txt(x, name, 270, y, 38, F.sans, K.ink, '', 'left', a);
+    txt(x, comp.join('・'), 900, y, 54, F.serif, K.ink, 'bold', 'right', a);
+  });
+  const hdA = clamp((t - 2.4) / 0.3);
+  txt(x, '運命数', 200, top - 62, 30, F.sans, K.soft, '', 'center', hdA);
+  txt(x, '相性がいい数字', 900, top - 62, 30, F.sans, K.soft, '', 'right', hdA);
+  // 終盤: 行動のお願い
+  const ctaA = clamp((t - spec.ctaAt) / 0.4);
+  if (ctaA > 0) {
+    const y0 = top + spec.rows.length * step + 20;
+    x.globalAlpha = ctaA; x.fillStyle = K.gold; x.fillRect(150, y0, W - 300, 3); x.globalAlpha = 1;
+    txt(x, spec.cta1, W / 2, y0 + 62, 50, F.sans, K.ink, 'bold', 'center', ctaA);
+    txt(x, spec.cta2, W / 2, y0 + 126, 40, F.sans, K.soft, '', 'center', ctaA);
+  }
+  txt(x, '数秘のとびら', W / 2, 1620, 40, F.serif, K.gold, 'bold', 'center', 0.9);
+}
+// type "pick": 運命数ひとつに絞って、相性がいい3つの数字を1つずつ見せる
+// spec: { type:'pick', dur, n, name, picks:[[数字, 名前, くれるもの], ...], cta1, cta2 }
+function drawPick(x, spec, t) {
+  bg(x);
+  const m = ease((t - 1.8) / 0.5), hin = 0.35 + 0.65 * ease(t / 0.3);
+  // フック: 大きな数字 → 上へ
+  const ny = 700 + (330 - 700) * m, ns = 1 - 0.45 * m;
+  x.save(); x.translate(W / 2, ny); x.scale(ns, ns);
+  txt(x, '運命数', 0, -300, 64, F.sans, K.soft, 'bold', 'center', hin);
+  txt(x, String(spec.n), 0, -20, spec.n < 10 ? 400 : 320, F.serif, K.gold, 'bold', 'center', hin);
+  txt(x, 'の人と', 0, 250, 72, F.serif, K.ink, 'bold', 'center', hin);
+  x.restore();
+  txt(x, '相性がいい数字は？', W / 2, 1150 + (560 - 1150) * m, 96 - 30 * m, F.serif, K.ink, 'bold', 'center', hin);
+  txt(x, '↓ 自分の数字が出たら保存', W / 2, 1290, 42, F.sans, K.soft, '', 'center', clamp((t - 0.5) / 0.3) * (1 - m) * (0.6 + 0.4 * Math.sin(t * 8)));
+  // 3つを順に
+  spec.picks.forEach(([b, name, give], i) => {
+    const t0 = 2.4 + i * 1.3, a = clamp((t - t0) / 0.3); if (a <= 0) return;
+    const y = 760 + i * 230, s = pop((t - t0) / 0.4);
+    x.globalAlpha = 0.45 * a; x.fillStyle = K.line; x.fillRect(110, y - 95, W - 220, 190); x.globalAlpha = 1;
+    x.save(); x.translate(250, y); x.scale(s, s); txt(x, String(b), 0, 0, b < 10 ? 150 : 120, F.serif, K.gold, 'bold', 'center', a); x.restore();
+    txt(x, name, 380, y - 34, 56, F.serif, K.ink, 'bold', 'left', a);
+    txt(x, give, 380, y + 44, 36, F.sans, K.soft, '', 'left', a);
+  });
+  const ctaA = clamp((t - spec.ctaAt) / 0.4);
+  if (ctaA > 0) {
+    x.globalAlpha = ctaA; x.fillStyle = K.gold; x.fillRect(150, 1450, W - 300, 3); x.globalAlpha = 1;
+    txt(x, spec.cta1, W / 2, 1515, 50, F.sans, K.ink, 'bold', 'center', ctaA);
+    txt(x, spec.cta2, W / 2, 1580, 40, F.sans, K.soft, '', 'center', ctaA);
+  }
+  txt(x, '数秘のとびら', W / 2, 1680, 40, F.serif, K.gold, 'bold', 'center', 0.9);
+}
+window.__reelDraw = (x, spec, t) => { if (spec.type === 'chart') drawChart(x, spec, t); else if (spec.type === 'pick') drawPick(x, spec, t); };
+window.__reelCanvas = () => { let c = window.__rc; if (!c) { c = window.__rc = document.createElement('canvas'); c.width = W; c.height = H; } return c; };
+// 指定秒のコマを画面右上に小さく表示（確認用）。もう一度呼ぶと差し替え、null で消す。
+window.__reelPreview = (sec, spec = window.__reelSpec) => {
+  let img = document.getElementById('__reelprev'); if (sec == null) { if (img) img.remove(); return 'removed'; }
+  const c = document.createElement('canvas'); c.width = W; c.height = H; __reelDraw(c.getContext('2d'), spec, sec);
+  if (!img) { img = document.createElement('img'); img.id = '__reelprev'; img.style.cssText = 'position:fixed;top:0;right:0;height:100vh;z-index:999999;border:2px solid red'; document.body.appendChild(img); }
+  img.src = c.toDataURL('image/jpeg', 0.9); return 'shown ' + sec + 's';
+};
+// 動画（mp4）はページ内で WebCodecs（VideoEncoder・H.264）で1コマずつ符号化し、下の小さな mp4 組み立てで1ファイルにする。
+// （MediaRecorder は内蔵ブラウザだと数フレームしか録れず、外部URLからの取得も Instagram の CSP で止められるため、この方式）
+function box(type, ...parts) {
+  const body = parts.map(p => p instanceof Uint8Array ? p : new Uint8Array(p)); const len = 8 + body.reduce((s, p) => s + p.length, 0);
+  const out = new Uint8Array(len), dv = new DataView(out.buffer); dv.setUint32(0, len); for (let i = 0; i < 4; i++) out[4 + i] = type.charCodeAt(i);
+  let o = 8; for (const p of body) { out.set(p, o); o += p.length; } return out;
+}
+const u32 = (...v) => { const a = new Uint8Array(v.length * 4), d = new DataView(a.buffer); v.forEach((x, i) => d.setUint32(i * 4, x)); return a; };
+const u16 = (...v) => { const a = new Uint8Array(v.length * 2), d = new DataView(a.buffer); v.forEach((x, i) => d.setUint16(i * 2, x)); return a; };
+const bytes = (...v) => new Uint8Array(v);
+const full = (type, ver, flags, ...parts) => box(type, u32((ver << 24) | flags), ...parts);
+const MATRIX = u32(0x10000, 0, 0, 0, 0x10000, 0, 0, 0, 0x40000000);
+function mp4(samples, avcC, w, h, fps) {
+  const n = samples.length, dur = n; // media timescale = fps, 1 tick per frame
+  const ftyp = box('ftyp', new TextEncoder().encode('isom'), u32(512), new TextEncoder().encode('isomiso2avc1mp41'));
+  const mdatLen = 8 + samples.reduce((s, x) => s + x.data.length, 0);
+  const keys = samples.map((s, i) => s.key ? i + 1 : 0).filter(Boolean);
+  const avc1 = box('avc1', new Uint8Array(6), u16(1), new Uint8Array(16), u16(w, h), u32(0x480000, 0x480000, 0), u16(1), new Uint8Array(32), u16(0x18, 0xffff), box('avcC', avcC));
+  const stbl = box('stbl',
+    full('stsd', 0, 0, u32(1), avc1),
+    full('stts', 0, 0, u32(1, n, 1)),
+    full('stss', 0, 0, u32(keys.length, ...keys)),
+    full('stsc', 0, 0, u32(1, 1, n, 1)),
+    full('stsz', 0, 0, u32(0, n, ...samples.map(s => s.data.length))),
+    full('stco', 0, 0, u32(1, 0)));
+  const mvdur = Math.round(dur * 1000 / fps);
+  const moovOf = (off) => {
+    const st = stbl.slice(); const dv = new DataView(st.buffer); dv.setUint32(st.length - 4, off); // stco の唯一のオフセット
+    return box('moov',
+      full('mvhd', 0, 0, u32(0, 0, 1000, mvdur, 0x10000), u16(0x100, 0), u32(0, 0), MATRIX, new Uint8Array(24), u32(2)),
+      box('trak',
+        full('tkhd', 0, 3, u32(0, 0, 1, 0, mvdur, 0, 0), u16(0, 0, 0, 0), MATRIX, u32(w << 16, h << 16)),
+        box('mdia',
+          full('mdhd', 0, 0, u32(0, 0, fps, dur), u16(0x55c4, 0)),
+          full('hdlr', 0, 0, u32(0), new TextEncoder().encode('vide'), new Uint8Array(12), new TextEncoder().encode('VideoHandler\0')),
+          box('minf', full('vmhd', 0, 1, new Uint8Array(8)), box('dinf', full('dref', 0, 0, u32(1), full('url ', 0, 1))), st))));
+  };
+  const moovLen = moovOf(0).length, off = ftyp.length + moovLen + 8; // faststart: ftyp → moov → mdat
+  const mdatHead = new Uint8Array(8); new DataView(mdatHead.buffer).setUint32(0, mdatLen); mdatHead.set([109, 100, 97, 116], 4);
+  return new Blob([ftyp, moovOf(off), mdatHead, ...samples.map(s => s.data)], { type: 'video/mp4' });
+}
+// spec から mp4 を作る。内蔵ブラウザの符号化は遅い（1080x1920 で数fps）ので裏で動かし、__reelStatus() で進み具合を見る。
+// 終わると window.__reelBlob に入り、__reelStatus().done が true になる（目安 2〜4分）。途中で止まったらページを再読み込みしてやり直す。
+window.__reelStart = (spec) => {
+  window.__reelSpec = spec; const st = window.__reelState = { frame: 0, total: Math.round(spec.dur * FPS), out: 0, done: false, err: null, t0: Date.now() };
+  (async () => {
+    const c = __reelCanvas(), x = c.getContext('2d'), samples = []; let avcC = null;
+    const enc = new VideoEncoder({ output: (chunk, meta) => { if (meta && meta.decoderConfig && meta.decoderConfig.description) avcC = new Uint8Array(meta.decoderConfig.description); const d = new Uint8Array(chunk.byteLength); chunk.copyTo(d); samples.push({ data: d, key: chunk.type === 'key' }); st.out = samples.length; }, error: e => st.err = String(e) });
+    enc.configure({ codec: 'avc1.640028', width: W, height: H, bitrate: 6000000, framerate: FPS, avc: { format: 'avc' } });
+    for (let f = 0; f < st.total && !st.err; f++) {
+      __reelDraw(x, spec, f / FPS);
+      const vf = new VideoFrame(c, { timestamp: Math.round(f * 1e6 / FPS), duration: Math.round(1e6 / FPS) });
+      enc.encode(vf, { keyFrame: f % 60 === 0 }); vf.close(); st.frame = f + 1;
+      while (enc.encodeQueueSize > 4 && !st.err) await new Promise(r => setTimeout(r, 20));
+    }
+    await enc.flush(); enc.close();
+    if (st.err) return; if (!avcC) { st.err = 'no avcC'; return; }
+    window.__reelBlob = mp4(samples, avcC, W, H, FPS);
+    const v = document.createElement('video'); v.muted = true; v.src = URL.createObjectURL(__reelBlob);
+    await new Promise(r => { v.onloadedmetadata = r; v.onerror = r; setTimeout(r, 5000); });
+    Object.assign(st, { bytes: __reelBlob.size, duration: v.duration, w: v.videoWidth, h: v.videoHeight, verr: v.error && v.error.message, done: true });
+  })().catch(e => st.err = String(e));
+  return 'started ' + st.total + ' frames';
+};
+window.__reelStatus = () => { const s = window.__reelState; return s ? Object.assign({}, s, { sec: Math.round((Date.now() - s.t0) / 1000) }) : null; };
+// 作った mp4 の指定秒のコマを画面右に表示（確認用。__reelPreview(null) で消す）
+window.__reelCheck = async (sec) => {
+  const v = document.createElement('video'); v.muted = true; v.src = URL.createObjectURL(__reelBlob);
+  await new Promise(r => { v.onloadeddata = r; setTimeout(r, 5000); }); v.currentTime = sec; await new Promise(r => { v.onseeked = r; setTimeout(r, 5000); });
+  const c = document.createElement('canvas'); c.width = W; c.height = H; c.getContext('2d').drawImage(v, 0, 0);
+  let img = document.getElementById('__reelprev'); if (!img) { img = document.createElement('img'); img.id = '__reelprev'; img.style.cssText = 'position:fixed;top:0;right:0;height:100vh;z-index:999999;border:2px solid red'; document.body.appendChild(img); }
+  img.src = c.toDataURL('image/jpeg', 0.9); return 'video frame ' + sec + 's';
+};
+// 投稿画面のファイル欄に動画を入れる（先に ig_render.js の __igOpen() を実行しておく）。
+// 注意: 先頭の input[type=file] はプロフィール写真用なので使わない（video/mp4 を受け付ける欄を選ぶ）
+window.__reelAttach = async () => {
+  const inp = Array.from(document.querySelectorAll('input[type=file]')).find(i => /video\/mp4/.test(i.accept)); if (!inp) return 'no video file input'; if (!window.__reelBlob) return 'no video';
+  const dt = new DataTransfer(); dt.items.add(new File([__reelBlob], 'reel.mp4', { type: 'video/mp4' }));
+  inp.files = dt.files; inp.dispatchEvent(new Event('change', { bubbles: true })); return 'attached';
+};
+}
+'reel helpers loaded';
