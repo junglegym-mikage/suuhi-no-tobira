@@ -101,6 +101,7 @@ function drawSlides(x, spec, t) {
 // フィード用の spec（instagram_posts.json の today / pair / card / aisho / year2026）をそのまま縦動画にする（dur 省略時 8秒）
 // 2026-10-31 から Instagram は全投稿リール。中身はフィード画像と同じで、順に出てくる動きを付けたもの。
 function popNum(x, s, px, py, size, t0, t) { const a = clamp((t - t0) / 0.25); if (a <= 0) return; const k = pop((t - t0) / 0.4); x.save(); x.translate(px, py); x.scale(k, k); txt(x, s, 0, 0, size, F.serif, K.gold, 'bold', 'center', a); x.restore(); }
+function fit(x, s, size, font, maxW = 940) { x.font = `bold ${size}px ${font}`; const w = x.measureText(s).width; return w > maxW ? Math.floor(size * maxW / w) : size; }
 function fade(t, t0) { return ease((t - t0) / 0.35); }
 function feedCta(x, t, t0, l1, l2) {
   const a = fade(t, t0); if (a <= 0) return;
@@ -113,7 +114,7 @@ function drawFeed(x, spec, t) {
     txt(x, spec.label, W / 2, 260, 52, F.sans, K.soft, 'bold', 'center', hin);
     txt(x, '今日の数字は…', W / 2, 360, 76, F.serif, K.ink, 'bold', 'center', hin);
     popNum(x, String(spec.n), W / 2, 680, spec.n < 10 ? 460 : 360, 1.0, t);
-    txt(x, spec.title, W / 2, 1000, 92, F.serif, K.ink, 'bold', 'center', fade(t, 2.0));
+    txt(x, spec.title, W / 2, 1000, fit(x, spec.title, 92, F.serif), F.serif, K.ink, 'bold', 'center', fade(t, 2.0));
     const m = spec.msg, cut = m.length > 18 ? (m.indexOf('、') + 1 || Math.ceil(m.length / 2)) : m.length;
     txt(x, m.slice(0, cut), W / 2, 1140, 46, F.sans, K.ink, '', 'center', fade(t, 3.0)); if (cut < m.length) txt(x, m.slice(cut), W / 2, 1210, 46, F.sans, K.ink, '', 'center', fade(t, 3.0));
     feedCta(x, t, 4.6, 'あなたの運命数は？', 'プロフのリンクから無料診断');
@@ -121,14 +122,14 @@ function drawFeed(x, spec, t) {
     txt(x, '運命数の相性', W / 2, 300, 64, F.serif, K.soft, 'bold', 'center', hin);
     const big = (spec.a >= 10 || spec.b >= 10) ? 260 : 340;
     popNum(x, String(spec.a), 300, 620, big, 0.4, t); txt(x, '×', W / 2, 620, 110, F.serif, K.soft, '', 'center', fade(t, 0.8)); popNum(x, String(spec.b), 780, 620, big, 1.1, t);
-    txt(x, `${spec.na} × ${spec.nb}`, W / 2, 900, 58, F.serif, K.ink, 'bold', 'center', fade(t, 2.0));
+    txt(x, `${spec.na} × ${spec.nb}`, W / 2, 900, fit(x, `${spec.na} × ${spec.nb}`, 58, F.serif), F.serif, K.ink, 'bold', 'center', fade(t, 2.0));
     const la = clamp((t - 3.0) / 0.25); if (la > 0) { const k = pop((t - 3.0) / 0.4); x.save(); x.translate(W / 2, 1060); x.scale(k, k); x.globalAlpha = la; x.strokeStyle = K.gold; x.lineWidth = 3; x.strokeRect(-200, -60, 400, 120); x.globalAlpha = 1; txt(x, spec.level, 0, 0, 60, F.serif, K.gold, 'bold', 'center', la); x.restore(); }
     feedCta(x, t, 4.6, '全78通りの相性はプロフのリンクから', '気になる人の数字、コメントで教えてね');
   } else if (spec.type === 'card') {
     txt(x, '運命数', W / 2, 330, 80, F.serif, K.ink, 'bold', 'center', hin);
     popNum(x, String(spec.n), W / 2, 680, spec.n < 10 ? 460 : 360, 0.8, t);
-    txt(x, `の人は「${spec.name}」`, W / 2, 1000, 80, F.serif, K.ink, 'bold', 'center', fade(t, 2.0));
-    txt(x, spec.kw, W / 2, 1140, 50, F.sans, K.seal, 'bold', 'center', fade(t, 3.0));
+    txt(x, `の人は「${spec.name}」`, W / 2, 1000, fit(x, `の人は「${spec.name}」`, 80, F.serif), F.serif, K.ink, 'bold', 'center', fade(t, 2.0));
+    txt(x, spec.kw, W / 2, 1140, fit(x, spec.kw, 50, F.sans), F.sans, K.seal, 'bold', 'center', fade(t, 3.0));
     feedCta(x, t, 4.6, 'あなたの運命数は？', 'プロフのリンクから無料診断');
   } else {
     const rows = spec.type === 'aisho' ? spec.rows.map(([n, s]) => [n, s]) : ['始まりの年', '育てる年', '楽しむ年', '固める年', '動く年', 'つながる年', '深める年', '実る年', 'しめくくりの年'].map((s, i) => [i + 1, s]);
