@@ -11,6 +11,7 @@ const { chromium } = require('playwright');
   await page.evaluate(() => document.fonts.ready);
   const tmp = out.replace(/\.mp4$/, '') + '.tmp.mp4';
   const ff = spawn('ffmpeg', ['-y', '-f', 'image2pipe', '-framerate', '30', '-c:v', 'mjpeg', '-i', '-', '-c:v', 'libx264', '-preset', 'slow', '-crf', '18', '-pix_fmt', 'yuv420p', '-profile:v', 'high', '-movflags', '+faststart', tmp], { stdio: ['pipe', 'ignore', 'inherit'] });
+  if (!spec.dur) spec.dur = 8;
   const total = Math.round(spec.dur * 30);
   for (let f = 0; f < total; f++) {
     const b64 = await page.evaluate(([s, t]) => { const c = __reelCanvas(); __reelDraw(c.getContext('2d'), s, t); return c.toDataURL('image/jpeg', 0.95).split(',')[1]; }, [spec, f / 30]);
