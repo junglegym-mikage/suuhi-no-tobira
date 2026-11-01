@@ -7,6 +7,7 @@
 
 ## 内蔵ブラウザのアカウント切り替え（他のアカウントと共用）
 内蔵ブラウザのログインは全タブ共通で、Instagram は一度に1アカウントだけ。オーナーは同じ内蔵ブラウザで他のアカウント（process_performance_ai・mikage_decision_lab・yujiro_8345・mikage_healthcare_support）も Claude で運用しているため、開いたときに別アカウントになっていることがある（2026-11-01 朝枠がこれで止まった）。
+   - process_performance_ai は Claude Code の別の項目（別プロジェクト）で運用中。こちらからは見えないので、その作業を邪魔しないよう、切り替えたら必ず元のアカウントに戻す。切り替え時に投稿画面や入力途中の画面が開いていたら、他の作業中の可能性があるので触らずに数分待ってから見直す。
 1. **開始時**：`__igAccount()` が `/suuhi_tobira/` でなければ、そのアカウント名（元のアカウント）を控えてから切り替える：https://www.instagram.com/ を開く → 右上の「切り替える」→ 一覧の **suuhi_tobira** を left_click → 数秒待つ。
    - 「suuhi_tobiraとしてログイン」（保存済みログイン）の画面が出たら、そのボタンを押す。**パスワード入力を求められたら入力せず、止めて報告**。
    - https://www.instagram.com/suuhi_tobira/ を開き直し、ig_render.js を再実行して `__igAccount()` が `/suuhi_tobira/`、かつ画面に「プロフィールを編集」があることを確認してから作業する。
