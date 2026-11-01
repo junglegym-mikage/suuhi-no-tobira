@@ -5,6 +5,15 @@
 - サイト: https://suuhi-tobira.github.io/
 - 決済: STORES ネットショップ https://suuhinotobira.stores.jp/ （鑑定書 https://suuhinotobira.stores.jp/items/6ad96e649e2872f0141245c3 ）。Stripeは占いが禁止業種のため使わない。
 
+## 内蔵ブラウザのアカウント切り替え（他のアカウントと共用）
+内蔵ブラウザのログインは全タブ共通で、Instagram は一度に1アカウントだけ。オーナーは同じ内蔵ブラウザで他のアカウント（process_performance_ai・mikage_decision_lab・yujiro_8345・mikage_healthcare_support）も Claude で運用しているため、開いたときに別アカウントになっていることがある（2026-11-01 朝枠がこれで止まった）。
+1. **開始時**：`__igAccount()` が `/suuhi_tobira/` でなければ、そのアカウント名（元のアカウント）を控えてから切り替える：https://www.instagram.com/ を開く → 右上の「切り替える」→ 一覧の **suuhi_tobira** を left_click → 数秒待つ。
+   - 「suuhi_tobiraとしてログイン」（保存済みログイン）の画面が出たら、そのボタンを押す。**パスワード入力を求められたら入力せず、止めて報告**。
+   - https://www.instagram.com/suuhi_tobira/ を開き直し、ig_render.js を再実行して `__igAccount()` が `/suuhi_tobira/`、かつ画面に「プロフィールを編集」があることを確認してから作業する。
+2. **シェアの直前**にも `__igAccount()` が `/suuhi_tobira/` のままか確認（途中で他の作業に切り替えられていたら、シェアせずに 1 からやり直す）。
+3. **終了時**：元のアカウントがあれば、同じ手順でそのアカウントに切り替えて戻す（他のアカウントの運用を止めないため）。戻すときもパスワードは入力しない。
+4. suuhi_tobira 以外のアカウントには絶対に投稿・編集しない。
+
 ## Instagram 朝・昼・夜の3枠（1日3回：6:38・12:38・20:38 に自動実行）
 **2026-11-01 から、3枠ともリールで投稿する**（オーナー指示 2026-10-31）。データは今までどおり `ops/instagram_posts.json` の `posts[日付][枠]`。spec（today / pair / card / aisho / year2026）を `ig_reel.js` がそのまま縦動画（1080x1920・8秒・無音）にする。2026-10-31 以前の枠だけ、下の「画像で投稿する場合」の手順を使う。
 
