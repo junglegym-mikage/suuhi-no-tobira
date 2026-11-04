@@ -143,8 +143,55 @@ function drawFeed(x, spec, t) {
   }
   txt(x, '数秘のとびら', W / 2, 1640, 40, F.serif, K.gold, 'bold', 'center', 0.9);
 }
+// 見出し2〜3行（h1 小・h2 大・h3 金）。競合リサーチ 2026-11-02 の「誕生日でわかる／実は〇〇な人」型
+function heads(x, spec, t, y0 = 210) {
+  const hin = 0.35 + 0.65 * ease(t / 0.3);
+  if (spec.h1) txt(x, spec.h1, W / 2, y0, fit(x, spec.h1, 52, F.sans), F.sans, K.soft, 'bold', 'center', hin);
+  txt(x, spec.h2, W / 2, y0 + 110, fit(x, spec.h2, 96, F.serif, 880), F.serif, K.ink, 'bold', 'center', hin);
+  if (spec.h3) txt(x, spec.h3, W / 2, y0 + 225, fit(x, spec.h3, 84, F.serif), F.serif, K.gold, 'bold', 'center', hin);
+}
+// type "rank": 空欄ランキング（5位から順に埋まる）。dur 8秒。
+// spec: { type:'rank', h1, h2, h3, rows:[[日付, ひとこと], ...（1位から順に5つ）], labels:['1位',...]（省略可）, hideTop:true で1位は「？」→コメント欄, cta1, cta2 }
+function drawRank(x, spec, t) {
+  bg(x); heads(x, spec, t);
+  const n = spec.rows.length, top = 620, step = 168, labels = spec.labels || spec.rows.map((_, i) => (i + 1) + '位');
+  const at = (i) => 1.4 + (n - 1 - i) * 0.85 + (i === 0 ? 0.3 : 0); // 5位→1位の順。1位だけ少し間をおく
+  spec.rows.forEach(([d, c], i) => {
+    const y = top + i * step, a = clamp((t - at(i)) / 0.3), first = i === 0;
+    x.globalAlpha = 0.5; x.fillStyle = K.line; x.fillRect(100, y - 70, W - 200, 140); x.globalAlpha = 1;
+    if (first) { x.strokeStyle = K.gold; x.lineWidth = 3; x.strokeRect(100, y - 70, W - 200, 140); }
+    txt(x, labels[i], 175, y, labels[i].length > 2 ? 46 : 56, F.serif, first ? K.gold : K.ink, 'bold', 'center', 1);
+    if (a <= 0) { txt(x, '？', 600, y, 60, F.serif, K.soft, 'bold', 'center', 0.5); return; }
+    const s = pop((t - at(i)) / 0.4); x.save(); x.translate(600, y); x.scale(s, s);
+    if (first && spec.hideTop) { txt(x, '1位はコメント欄で', 0, 0, 52, F.serif, K.gold, 'bold', 'center', a); x.restore(); return; }
+    txt(x, d, 0, -30, fit(x, d, 52, F.serif, 700), F.serif, first ? K.gold : K.ink, 'bold', 'center', a);
+    txt(x, c, 0, 34, fit(x, c, 38, F.sans, 700), F.sans, K.soft, '', 'center', a);
+    x.restore();
+  });
+  const ctaA = fade(t, at(0) + 0.9);
+  if (ctaA > 0) { txt(x, spec.cta1, W / 2, top + n * step + 10, fit(x, spec.cta1, 48, F.sans), F.sans, K.ink, 'bold', 'center', ctaA); if (spec.cta2) txt(x, spec.cta2, W / 2, top + n * step + 75, fit(x, spec.cta2, 38, F.sans), F.sans, K.soft, '', 'center', ctaA); }
+  txt(x, '数秘のとびら', W / 2, 1720, 40, F.serif, K.gold, 'bold', 'center', 0.9);
+}
+// type "grid9": 9グループ全員入りの一枚（見た目→実は）。dur 8秒。
+// spec: { type:'grid9', h1, h2, h3, mid:'↓ 実は'（省略可）, cells:[[日付, 見た目, 実は], ...9つ（1〜9の順）], cta1, cta2 }
+function drawGrid9(x, spec, t) {
+  bg(x); heads(x, spec, t);
+  const cw = 312, ch = 300, gx = (W - cw * 3 - 24) / 2, gy = 590;
+  spec.cells.forEach(([d, before, after], i) => {
+    const a = clamp((t - (1.0 + i * 0.32)) / 0.3); const cx = gx + (i % 3) * (cw + 12) + cw / 2, cy = gy + Math.floor(i / 3) * (ch + 12) + ch / 2;
+    x.globalAlpha = 0.5; x.fillStyle = K.line; x.fillRect(cx - cw / 2, cy - ch / 2, cw, ch); x.globalAlpha = 1;
+    if (a <= 0) return;
+    txt(x, d, cx, cy - 100, fit(x, d, 36, F.sans, cw - 24), F.sans, K.gold, 'bold', 'center', a);
+    txt(x, before, cx, cy - 35, fit(x, before, 38, F.sans, cw - 24), F.sans, K.soft, '', 'center', a);
+    txt(x, spec.mid || '↓ 実は', cx, cy + 22, fit(x, spec.mid || '↓ 実は', 30, F.sans, cw - 24), F.sans, K.seal, 'bold', 'center', a);
+    txt(x, after, cx, cy + 85, fit(x, after, 46, F.serif, cw - 20), F.serif, K.ink, 'bold', 'center', a);
+  });
+  const ctaA = fade(t, 1.0 + 9 * 0.32 + 0.6), y = gy + 3 * (ch + 12) + 50;
+  if (ctaA > 0) { txt(x, spec.cta1, W / 2, y, fit(x, spec.cta1, 48, F.sans), F.sans, K.ink, 'bold', 'center', ctaA); if (spec.cta2) txt(x, spec.cta2, W / 2, y + 65, fit(x, spec.cta2, 38, F.sans), F.sans, K.soft, '', 'center', ctaA); }
+  txt(x, '数秘のとびら', W / 2, 1760, 40, F.serif, K.gold, 'bold', 'center', 0.9);
+}
 const FEED = ['today', 'pair', 'card', 'aisho', 'year2026'];
-window.__reelDraw = (x, spec, t) => { if (spec.type === 'chart') drawChart(x, spec, t); else if (spec.type === 'pick') drawPick(x, spec, t); else if (spec.type === 'slides') drawSlides(x, spec, t); else if (FEED.includes(spec.type)) drawFeed(x, spec, t); };
+window.__reelDraw = (x, spec, t) => { if (spec.type === 'chart') drawChart(x, spec, t); else if (spec.type === 'pick') drawPick(x, spec, t); else if (spec.type === 'slides') drawSlides(x, spec, t); else if (spec.type === 'rank') drawRank(x, spec, t); else if (spec.type === 'grid9') drawGrid9(x, spec, t); else if (FEED.includes(spec.type)) drawFeed(x, spec, t); };
 window.__reelCanvas = () => { let c = window.__rc; if (!c) { c = window.__rc = document.createElement('canvas'); c.width = W; c.height = H; } return c; };
 // 指定秒のコマを画面右上に小さく表示（確認用）。もう一度呼ぶと差し替え、null で消す。
 window.__reelPreview = (sec, spec = window.__reelSpec) => {
