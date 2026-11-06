@@ -1,7 +1,7 @@
 """数秘のとびら ビルド: src/ と content/ から docs/（GitHub Pages 公開用）を作る。
 使い方: python3 build.py
 """
-import os, shutil, sys, html
+import os, shutil, sys, html, glob
 ROOT = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(ROOT, "content"))
 from number_texts import NUMBERS  # noqa: E402
@@ -73,7 +73,7 @@ def others(cur=None):
     return '<div class="others">' + "".join(
         f'<a href="{n}.html"{" aria-current=\"page\"" if n == cur else ""}>{n}</a>' for n in ORDER) + "</div>"
 
-FOOT = ('<footer><span>© 2026 数秘のとびら</span><a href="../legal.html">特定商取引法に基づく表記</a>'
+FOOT = ('<footer><span>© 2026 数秘のとびら</span><a href="../column/index.html">コラム</a><a href="../legal.html">特定商取引法に基づく表記</a>'
         '<a href="../privacy.html">プライバシーポリシー</a><a href="../terms.html">利用規約</a></footer>')
 
 for n, d in NUMBERS.items():
@@ -194,50 +194,148 @@ open(os.path.join(OUT, "compat", "index.html"), "w", encoding="utf-8").write(
     f'<h2>相性早見表</h2><p>◎は数秘術で相性がよいとされる組み合わせ。表の記号を押すと、その組み合わせの解説が開きます。</p>'
     f'<div class="grid"><table><tr><th></th>{head}</tr>{rows_c}</table></div>{FOOT_C}</div></body></html>\n')
 
-# 3c) 2026年の運勢（個人年数1〜9）
+# 3c) 年の運勢（個人年数1〜9）。YEAR_THEMES は年に依存しない文なので、年ごとにページを作る
 from year_texts import YEAR_THEMES  # noqa: E402
-os.makedirs(os.path.join(OUT, "2026"), exist_ok=True)
+YEARS = [2026, 2027]
 YNAV = lambda cur=None: '<div class="others">' + "".join(f'<a href="{n}.html"{" aria-current=\"page\"" if n == cur else ""}>{n}</a>' for n in range(1, 10)) + "</div>"
-YCALC = """<form class="calc" id="yf"><strong>あなたの2026年の個人年数を計算する</strong>
+def ycalc(Y):
+    return f"""<form class="calc" id="yf"><strong>あなたの{Y}年の個人年数を計算する</strong>
 <label>生まれた月 <input id="ym" inputmode="numeric" placeholder="8" maxlength="2" style="width:5em"></label>
 <label>生まれた日 <input id="yd" inputmode="numeric" placeholder="12" maxlength="2" style="width:5em"></label>
 <button type="submit">計算する</button><span id="ye" style="color:var(--seal)"></span></form>
 <script>
-document.getElementById('yf').addEventListener('submit',e=>{e.preventDefault();const m=+ym.value,d=+yd.value;
-if(!(m>=1&&m<=12&&d>=1&&d<=31)){ye.textContent='月と日を数字で入れてください';return}
-let n=[...String(m)+String(d)+'2026'].reduce((a,c)=>a+ +c,0);while(n>9)n=[...String(n)].reduce((a,c)=>a+ +c,0);
-location.href=n+'.html'});
+document.getElementById('yf').addEventListener('submit',e=>{{e.preventDefault();const m=+ym.value,d=+yd.value;
+if(!(m>=1&&m<=12&&d>=1&&d<=31)){{ye.textContent='月と日を数字で入れてください';return}}
+let n=[...String(m)+String(d)+'{Y}'].reduce((a,c)=>a+ +c,0);while(n>9)n=[...String(n)].reduce((a,c)=>a+ +c,0);
+location.href=n+'.html'}});
 </script>"""
-for n, y in YEAR_THEMES.items():
-    title = f"2026年の運勢・個人年数{n}「{y['name']}」｜数秘術"
-    desc = f"数秘術で2026年の個人年数が{n}の人の運勢。テーマは「{y['name']}」（{y['kw']}）。恋愛・仕事・金運と、2026年にやるとよいことを解説します。"
-    tips = "".join(f"<li>{t}</li>" for t in y["tips"])
-    body = f"""<div class="wrap">
-<p class="crumb"><a href="../index.html">数秘のとびら</a> › <a href="index.html">2026年の運勢</a> › 個人年数{n}</p>
-<div class="head"><div class="big">{n}</div><div><h1>2026年は「{y['name']}」<br>個人年数{n}の運勢</h1><p class="kw">{y['kw']}</p></div></div>
+year_urls = []
+for Y in YEARS:
+    os.makedirs(os.path.join(OUT, str(Y)), exist_ok=True)
+    other_y = " ".join(f'<a href="../{z}/index.html">{z}年の運勢</a>' for z in YEARS if z != Y)
+    for n, y in YEAR_THEMES.items():
+        title = f"{Y}年の運勢・個人年数{n}「{y['name']}」｜数秘術"
+        desc = f"数秘術で{Y}年の個人年数が{n}の人の運勢。テーマは「{y['name']}」（{y['kw']}）。恋愛・仕事・金運と、{Y}年にやるとよいことを解説します。"
+        tips = "".join(f"<li>{t}</li>" for t in y["tips"])
+        body = f"""<div class="wrap">
+<p class="crumb"><a href="../index.html">数秘のとびら</a> › <a href="index.html">{Y}年の運勢</a> › 個人年数{n}</p>
+<div class="head"><div class="big">{n}</div><div><h1>{Y}年は「{y['name']}」<br>個人年数{n}の運勢</h1><p class="kw">{y['kw']}</p></div></div>
 <p style="margin-top:16px">{y['overview']}</p>
-<h2>2026年の恋愛運</h2><p>{y['love']}</p>
-<h2>2026年の仕事運</h2><p>{y['work']}</p>
-<h2>2026年の金運</h2><p>{y['money']}</p>
-<h2>2026年にやるとよいこと</h2><ul>{tips}</ul>
+<h2>{Y}年の恋愛運</h2><p>{y['love']}</p>
+<h2>{Y}年の仕事運</h2><p>{y['work']}</p>
+<h2>{Y}年の金運</h2><p>{y['money']}</p>
+<h2>{Y}年にやるとよいこと</h2><ul>{tips}</ul>
 <div class="cta"><strong>月ごとの流れまで知りたい方へ</strong><p>「数秘術鑑定書」（PDF・約11ページ、1,980円）では、2026年・2027年の月ごとの運気カレンダーと、あなたの4つの数字からみる性格・恋愛・仕事を読み解きます。</p><a class="btn" href="https://suuhinotobira.stores.jp/items/6ad96e649e2872f0141245c3">鑑定書を見る</a> <a href="../index.html" style="margin-left:12px">まずは無料診断</a></div>
 <h2>ほかの個人年数</h2>{YNAV(n)}
+<p>{other_y}</p>
 <p style="font-size:.8rem;color:var(--soft)">※個人年数は「誕生月＋誕生日＋その年の西暦」の数字をすべて足して一桁にした数字です。占いは人生の参考としてお楽しみください。</p>
 {FOOT}</div>"""
-    open(os.path.join(OUT, "2026", f"{n}.html"), "w", encoding="utf-8").write(
-        f'<!doctype html>\n<html lang="ja"><head>{META}<title>{title}｜数秘のとびら</title>{og(title, desc, f"2026/{n}.html")}{CSTYLE}</head><body>{body}</body></html>\n')
-yt, yd = "2026年の運勢｜数秘術の個人年数でみる1年", "数秘術の個人年数（パーソナルイヤー）でみる2026年の運勢。誕生月と誕生日から、あなたの2026年のテーマ・恋愛運・仕事運・金運がわかります。"
-rows_y = "".join(f'<h2><a href="{n}.html">個人年数{n}　{y["name"]}</a></h2><p>{y["kw"]}。{y["overview"][:60]}…</p>' for n, y in YEAR_THEMES.items())
-open(os.path.join(OUT, "2026", "index.html"), "w", encoding="utf-8").write(
-    f'<!doctype html>\n<html lang="ja"><head>{META}<title>{yt}｜数秘のとびら</title>{og(yt, yd, "2026/")}{CSTYLE}</head><body><div class="wrap">'
-    f'<p class="crumb"><a href="../index.html">数秘のとびら</a> › 2026年の運勢</p><h1 style="margin-top:16px">2026年の運勢</h1><p>{yd}</p>{YCALC}{YNAV()}{rows_y}{FOOT}</div></body></html>\n')
-year_urls = ["2026/"] + [f"2026/{n}.html" for n in range(1, 10)]
+        open(os.path.join(OUT, str(Y), f"{n}.html"), "w", encoding="utf-8").write(
+            f'<!doctype html>\n<html lang="ja"><head>{META}<title>{title}｜数秘のとびら</title>{og(title, desc, f"{Y}/{n}.html")}{CSTYLE}</head><body>{body}</body></html>\n')
+    yt, yd = f"{Y}年の運勢｜数秘術の個人年数でみる1年", f"数秘術の個人年数（パーソナルイヤー）でみる{Y}年の運勢。誕生月と誕生日から、あなたの{Y}年のテーマ・恋愛運・仕事運・金運がわかります。"
+    rows_y = "".join(f'<h2><a href="{n}.html">個人年数{n}　{y["name"]}</a></h2><p>{y["kw"]}。{y["overview"][:60]}…</p>' for n, y in YEAR_THEMES.items())
+    open(os.path.join(OUT, str(Y), "index.html"), "w", encoding="utf-8").write(
+        f'<!doctype html>\n<html lang="ja"><head>{META}<title>{yt}｜数秘のとびら</title>{og(yt, yd, f"{Y}/")}{CSTYLE}</head><body><div class="wrap">'
+        f'<p class="crumb"><a href="../index.html">数秘のとびら</a> › {Y}年の運勢</p><h1 style="margin-top:16px">{Y}年の運勢</h1><p>{yd}</p>{ycalc(Y)}{YNAV()}{rows_y}<p>{other_y}</p>{FOOT}</div></body></html>\n')
+    year_urls += [f"{Y}/"] + [f"{Y}/{n}.html" for n in range(1, 10)]
+
+# 3d) コラム（検索から来てもらう記事）。content/articles/*.md を column/<slug>.html にする
+#  書式：先頭に「key: value」の行（title, description, date, keyword）、空行、本文（簡易Markdown）
+import re
+ART_DIR = os.path.join(ROOT, "content", "articles")
+def md_inline(t):
+    t = html.escape(t, quote=False)
+    t = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", t)
+    return re.sub(r"\[([^\]]+)\]\(([^)\s]+)\)", lambda m: f'<a href="{m.group(2)}">{m.group(1)}</a>', t)
+def md_to_html(src):
+    out, para, lst, tbl = [], [], None, []
+    def flush():
+        nonlocal para, lst, tbl
+        if para: out.append("<p>" + md_inline(" ".join(para)) + "</p>"); para = []
+        if lst: out.append(f"<{lst[0]}>" + "".join(f"<li>{md_inline(i)}</li>" for i in lst[1]) + f"</{lst[0]}>"); lst = None
+        if tbl:
+            rows = [r for r in tbl if not re.fullmatch(r"\|[\s:|-]+\|", r)]
+            cells = [[c.strip() for c in r.strip("|").split("|")] for r in rows]
+            out.append('<div class="grid"><table><tr>' + "".join(f"<th>{md_inline(c)}</th>" for c in cells[0]) + "</tr>"
+                       + "".join("<tr>" + "".join(f"<td>{md_inline(c)}</td>" for c in r) + "</tr>" for r in cells[1:]) + "</table></div>"); tbl = []
+    for line in src.splitlines():
+        l = line.rstrip()
+        if not l: flush(); continue
+        m = re.match(r"(#{2,3}) (.+)", l)
+        if m: flush(); out.append(f"<h{len(m.group(1))}>{md_inline(m.group(2))}</h{len(m.group(1))}>"); continue
+        if l.startswith("|"):
+            if para or lst: flush()
+            tbl.append(l); continue
+        m = re.match(r"(?:- |(\d+)\. )(.+)", l)
+        if m:
+            kind = "ol" if m.group(1) else "ul"
+            if para or tbl or (lst and lst[0] != kind): flush()
+            lst = lst or (kind, []); lst[1].append(m.group(2)); continue
+        if lst or tbl: flush()
+        para.append(l.strip())
+    flush(); return "\n".join(out)
+def read_article(path):
+    raw = open(path, encoding="utf-8").read().lstrip("﻿")
+    head, _, body = raw.partition("\n\n")
+    meta = dict(l.split(":", 1) for l in head.splitlines() if ":" in l)
+    meta = {k.strip(): v.strip() for k, v in meta.items()}
+    for k in ("title", "description", "date"):
+        if not meta.get(k): raise SystemExit(f"記事 {path} に {k} がありません")
+    meta["slug"] = os.path.splitext(os.path.basename(path))[0]
+    meta["body"] = body
+    return meta
+articles = sorted((read_article(f) for f in glob.glob(os.path.join(ART_DIR, "*.md"))) if os.path.isdir(ART_DIR) else [],
+                  key=lambda a: a["date"], reverse=True)
+import datetime as _dt
+today = _dt.date.today().isoformat()
+articles = [a for a in articles if a["date"] <= today]  # 日付が未来の記事はまだ公開しない
+ASTYLE = CSTYLE.replace("</style>", """
+.art h2{margin-top:36px}.art h3{font-size:1.05rem;margin:20px 0 4px}
+.art ul,.art ol{padding-left:1.4em;margin:0 0 8px}.meta{font-size:.82rem;color:var(--soft);margin:8px 0 0}
+.toc{background:var(--card);border:1px solid var(--line);padding:12px 16px;margin-top:16px;font-size:.92rem}.toc ol{margin:4px 0 0;padding-left:1.4em}
+.list h2{font-size:1.05rem}
+</style>""")
+column_urls = []
+if articles:
+    os.makedirs(os.path.join(OUT, "column"), exist_ok=True)
+    for a in articles:
+        body_html = md_to_html(a["body"])
+        heads = re.findall(r"<h2>(.+?)</h2>", body_html)
+        for i, h in enumerate(heads):
+            body_html = body_html.replace(f"<h2>{h}</h2>", f'<h2 id="s{i+1}">{h}</h2>', 1)
+        toc = ('<nav class="toc"><strong>目次</strong><ol>' + "".join(f'<li><a href="#s{i+1}">{re.sub("<[^>]+>", "", h)}</a></li>' for i, h in enumerate(heads)) + "</ol></nav>") if len(heads) >= 3 else ""
+        rel = [x for x in articles if x["slug"] != a["slug"]][:4]
+        rel_html = ("<h2>ほかのコラム</h2><ul>" + "".join(f'<li><a href="{x["slug"]}.html">{html.escape(x["title"])}</a></li>' for x in rel) + "</ul>") if rel else ""
+        ld = ('<script type="application/ld+json">' + __import__("json").dumps({"@context": "https://schema.org", "@type": "Article", "headline": a["title"], "description": a["description"],
+              "datePublished": a["date"], "dateModified": a.get("updated", a["date"]), "author": {"@type": "Organization", "name": "数秘のとびら"},
+              "publisher": {"@type": "Organization", "name": "数秘のとびら"}, "mainEntityOfPage": f"{SITE}/column/{a['slug']}.html"}, ensure_ascii=False) + "</script>")
+        page = f"""<div class="wrap art">
+<p class="crumb"><a href="../index.html">数秘のとびら</a> › <a href="index.html">コラム</a></p>
+<h1 style="margin-top:16px">{html.escape(a['title'])}</h1>
+<p class="meta">公開：{a['date']}{('　更新：' + a['updated']) if a.get('updated') else ''}　文：数秘のとびら編集部</p>
+{toc}
+{body_html}
+<div class="cta"><strong>あなたの数字を無料で調べる</strong><p>生年月日を入れるだけで、運命数と今年の流れがわかります。登録不要です。</p><a class="btn" href="../index.html">無料で診断する</a>
+<p style="margin-top:12px;font-size:.92rem">くわしく知りたい方には、性格・恋愛・仕事と月ごとの運気カレンダーをまとめた<a href="https://suuhinotobira.stores.jp/items/6ad96e649e2872f0141245c3">数秘術鑑定書（PDF・1,980円）</a>もあります。</p></div>
+{rel_html}
+<p style="font-size:.8rem;color:var(--soft)">※数秘術をもとにした占いです。人生の参考としてお楽しみください。</p>
+{FOOT}</div>"""
+        open(os.path.join(OUT, "column", f"{a['slug']}.html"), "w", encoding="utf-8").write(
+            f'<!doctype html>\n<html lang="ja"><head>{META}<title>{html.escape(a["title"])}｜数秘のとびら</title>{og(a["title"], a["description"], f"column/{a["slug"]}.html").replace("og:type\" content=\"website", "og:type\" content=\"article")}{ld}{ASTYLE}</head><body>{page}</body></html>\n')
+        column_urls.append((f"column/{a['slug']}.html", a.get("updated", a["date"])))
+    ct, cd = "数秘術コラム", "数秘術の基本や数字の意味、相性、運勢の読み方を、はじめての方にもわかりやすく解説するコラムです。"
+    rows_c = "".join(f'<h2><a href="{a["slug"]}.html">{html.escape(a["title"])}</a></h2><p>{html.escape(a["description"])}</p>' for a in articles)
+    open(os.path.join(OUT, "column", "index.html"), "w", encoding="utf-8").write(
+        f'<!doctype html>\n<html lang="ja"><head>{META}<title>{ct}｜数秘のとびら</title>{og(ct, cd, "column/")}{ASTYLE}</head><body><div class="wrap list">'
+        f'<p class="crumb"><a href="../index.html">数秘のとびら</a> › コラム</p><h1 style="margin-top:16px">{ct}</h1><p>{cd}</p>{rows_c}{FOOT}</div></body></html>\n')
+    column_urls.insert(0, ("column/", articles[0].get("updated", articles[0]["date"])))
 
 # 4) サイトマップ・robots
-urls = ["", "number/", "compat/"] + [f"number/{n}.html" for n in ORDER] + compat_urls + year_urls + ["legal.html", "privacy.html", "terms.html"]
+urls = ["", "number/", "compat/"] + [f"number/{n}.html" for n in ORDER] + compat_urls + year_urls + [u for u, _ in column_urls] + ["legal.html", "privacy.html", "terms.html"]
+lastmod = dict(column_urls)
 open(os.path.join(OUT, "sitemap.xml"), "w", encoding="utf-8").write(
     '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
-    + "".join(f"  <url><loc>{SITE}/{u}</loc></url>\n" for u in urls) + "</urlset>\n")
+    + "".join(f"  <url><loc>{SITE}/{u}</loc>" + (f"<lastmod>{lastmod[u]}</lastmod>" if u in lastmod else "") + "</url>\n" for u in urls) + "</urlset>\n")
 open(os.path.join(OUT, "robots.txt"), "w").write(f"User-agent: *\nAllow: /\nSitemap: {SITE}/sitemap.xml\n")
 open(os.path.join(OUT, ".nojekyll"), "w").write("")
 # 5) サンプル画像を新サイトへ、旧URL（docs/）は新URLへの転送ページにする
