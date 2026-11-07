@@ -16,7 +16,7 @@
 4. suuhi_tobira 以外のアカウントには絶対に投稿・編集しない。
 
 ## Instagram 朝・昼・夜の3枠（1日3回：6:38・12:38・20:38 に自動実行）
-**2026-11-01 から、3枠ともリールで投稿する**（オーナー指示 2026-10-31）。データは今までどおり `ops/instagram_posts.json` の `posts[日付][枠]`。spec（today / pair / card / aisho / year2026）を `ig_reel.js` がそのまま縦動画（1080x1920・8秒・無音）にする。2026-10-31 以前の枠だけ、下の「画像で投稿する場合」の手順を使う。
+**2026-11-01 から、3枠ともリールで投稿する**（オーナー指示 2026-10-31）。データは今までどおり `ops/instagram_posts.json` の `posts[日付][枠]`。spec（today / pair / card / aisho / year2026）を `ig_reel.js` がそのまま縦動画（1080x1920・8秒・背景音楽つき）にする。2026-10-31 以前の枠だけ、下の「画像で投稿する場合」の手順を使う。
 
 ### リールで投稿する（2026-11-01 以降）
 0. 枠の決め方・投稿済みの判定・データ切れの扱いは下の 0・1 と同じ（投稿済みは `/suuhi_tobira/reels/` とプロフィールの最新のキャプションでも確認し、二重投稿しない）。
@@ -41,7 +41,7 @@
 データは `ops/instagram_reels.json` の `reels[日付]`（1日1本）。`posted[日付]` があるか、`/suuhi_tobira/reels/` の最新リールのキャプションがその日の `caption` と同じなら投稿済みなので何もしない（二重投稿しない）。その日のデータが無ければ「リールのデータ切れ」と報告して終了。
 1. https://www.instagram.com/suuhi_tobira/ を開く。**resize_window で 1200x900 にしてから**ページを開き直す（内蔵ブラウザの幅が狭いと「シェア」「完了」が画面外に出て、キャプションが空で投稿される。2026-10-31 に発生）。
 2. `ops/ig_render.js` と `ops/ig_reel.js` を javascript_exec でそのまま実行。`__igAccount()` が `/suuhi_tobira/` か確認（違えば何もせず報告）。
-3. `__reelStart(spec)`（spec は reels[日付] のオブジェクト）→ `__reelStatus()` を `done: true` になるまで確認（数十秒〜3分。`err` が出たり進まなくなったら、ページを開き直して 2 からやり直す）。`duration` が spec.dur と同じ、`w`=1080・`h`=1920 であること。
+3. `__reelStart(spec)`（spec は reels[日付] のオブジェクト）→ `__reelStatus()` を `done: true` になるまで確認（数十秒〜3分。`err` が出たり進まなくなったら、ページを開き直して 2 からやり直す）。`duration` が spec.dur と同じ、`w`=1080・`h`=1920 であること。`audio` が「あり（mystic）」なら音楽入り。「なし（…）」でも投稿は続け、終わりの報告に理由を書く。
 4. `await __igOpen()` → `await __reelAttach()`（動画用のファイル欄を使う。先頭の input はプロフィール写真用なので使わない）。
 5. 「動画投稿はリール動画としてシェアされるようになりました」が出たら OK を押す。
 6. 切り取り画面で左下の比率ボタン → **「元の比率」**を選ぶ（選ばないと正方形に切られる）。→ `__clickText` 相当で「次へ」。
@@ -49,7 +49,7 @@
 8. キャプション欄を left_click → type で `caption` を入力 → 数秒待ち、`__igCaptionValue() === caption` を確認。Facebook へのシェアと AIラベルはオフのまま。→ 画面の「シェア」を left_click。「リール動画がシェアされました」が出れば完了。
 9. **キャプションの確認（必須）**：`/suuhi_tobira/reels/` で最新リールの id を取り、`__igCaption(id)` が `caption` と一致するか確認。空なら `https://www.instagram.com/p/<id>/` で `__igOpenEdit()` → 欄を left_click → type → 「完了」を left_click（1200x900 のまま）→ もう一度確認。削除・再投稿はしない。
 10. 最後に resize_window の preset "desktop" で表示を戻す。
-- BGM：ウェブ版の Instagram ではリールに音楽を付けられない（無音で投稿される）。音を付けたいときはオーナーがスマホアプリで付ける。
+- 背景音楽（2026-11-07〜、オーナーOK）：ウェブ版の Instagram では曲を選べないので、`ig_reel.js` が動画を作るときに自作の曲（`reel_music.js` と同じ中身。外部の曲・ダウンロードなし）を入れる。数秘は雰囲気 mystic。曲は spec ごとに自動で変わる。無音にしたい回だけ spec に `"music": false`。流行りの曲を使いたい回はオーナーがスマホアプリで投稿する。
 
 ## 競合リサーチ（投稿づくりの前に必ず読む・2026-11-02 オーナー指示）
 - 手順と結果は GitHub junglegym-mikage/ai-business のブランチ `sns/research` の `sns-research/README.md`（全アカウント共通）と `sns-research/suuhi_tobira/` にある。
