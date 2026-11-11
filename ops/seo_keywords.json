@@ -2,7 +2,7 @@
  "_note": "検索から来てもらうコラムの題材リスト。毎週の記事づくりは status が todo のうち priority が一番小さいもの（同じなら上のもの）を1本書く。書いたら status を published、slug と date を入れる。季節もの（due）は期限の3週間前までに書く。新しい題材は、検索結果やサジェストで見つけたものを末尾に足す（重複・既存ページと同じ内容は足さない）。",
  "keywords": [
   {"keyword": "数秘術 計算方法", "intent": "運命数の出し方を知りたい", "priority": 1, "status": "published", "slug": "how-to-calculate", "date": "2026-11-06"},
-  {"keyword": "数秘術 2027年 運勢", "intent": "来年の流れを知りたい（11〜1月に検索が増える）", "priority": 1, "status": "todo", "due": "2026-12-01", "links": ["../2027/index.html"]},
+  {"keyword": "数秘術 2027年 運勢", "intent": "来年の流れを知りたい（11〜1月に検索が増える）", "priority": 1, "status": "published", "due": "2026-12-01", "links": ["../2027/index.html"], "slug": "numerology-2027", "date": "2026-11-11"},
   {"keyword": "個人年数 9 過ごし方", "intent": "しめくくりの年に何をすればいいか", "priority": 2, "status": "todo", "due": "2026-12-15"},
   {"keyword": "個人年数 1 始まりの年 2027", "intent": "2027年が始まりの年の人", "priority": 2, "status": "todo", "due": "2026-12-15"},
   {"keyword": "マスターナンバー 意味", "intent": "11・22・33の意味と特徴", "priority": 2, "status": "todo"},
@@ -20,6 +20,7 @@
   {"keyword": "数秘術 カレンダー 月運", "intent": "月ごとの運気（個人月数）の出し方", "priority": 3, "status": "todo"},
   {"keyword": "運命数 同じ 夫婦", "intent": "同じ数字どうしのカップル", "priority": 4, "status": "todo"},
   {"keyword": "数秘術 9年周期", "intent": "9年サイクルの考え方", "priority": 3, "status": "todo"},
-  {"keyword": "数秘術 バレンタイン 相性", "intent": "季節もの（2月）", "priority": 3, "status": "todo", "due": "2027-01-25"}
+  {"keyword": "数秘術 バレンタイン 相性", "intent": "季節もの（2月）", "priority": 3, "status": "todo", "due": "2027-01-25"},
+  {"keyword": "ユニバーサルイヤー 2027 意味", "intent": "その年全体の数字（2027＝11/2）の読み方", "priority": 4, "status": "todo"}
  ]
 }
