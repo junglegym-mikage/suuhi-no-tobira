@@ -11,13 +11,15 @@
 {
 window.__sl = ms => new Promise(r => setTimeout(r, ms));
 window.__leaf = (root, txt) => Array.from(root.querySelectorAll('div,span')).filter(e => e.childElementCount === 0 && e.textContent.trim() === txt);
-const composer = () => Array.from(document.querySelectorAll('[role=dialog]')).find(x => /新しいスレッド/.test(x.innerText));
+const composers = () => Array.from(document.querySelectorAll('[role=dialog]')).filter(x => /新しいスレッド/.test(x.innerText));
+const composer = () => composers().pop();
+window.__cnt = () => composers().length;
 window.__calRoot = () => { const d = __leaf(document, '完了')[0]; if (!d) return null; let r = d; while (r && !/\d{4}年\d+月/.test(r.innerText || '')) r = r.parentElement; return r; };
 window.__setIn = (el, v) => { const s = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set; el.focus(); s.call(el, v); el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); el.blur(); };
 window.__open = async () => {
   if (composer()) return 'already open';
   const b = __leaf(document, '投稿').find(e => !e.closest('[role=dialog]')); if (!b) return 'no btn';
-  (b.closest('[role=button],button') || b).click(); await __sl(1500); return composer() ? 'open' : 'fail';
+  (b.closest('[role=button],button') || b).click(); for (let i = 0; i < 10; i++) { await __sl(500); if (composer()) return 'open'; } return 'fail';
 };
 window.__body = () => { const d = composer(); const e = d && d.querySelector('[contenteditable=true]'); return e ? e.innerText : null; };
 window.__menuSched = async () => {
@@ -40,10 +42,11 @@ window.__submit = async () => {
   for (let i = 0; i < 20; i++) { await __sl(500); if (!composer()) return 'scheduled'; } return 'dialog still open';
 };
 window.__go = async (day, hh, start, len, month = 11) => {
+  if (__cnt() !== 1) return { err: 'composers=' + __cnt() };
   const b = __body(); if (!b || !b.startsWith(start) || Math.abs(b.length - len) > 2) return { err: 'body', got: b && b.slice(0, 20), n: b && b.length };
   const m = await __menuSched(); if (m !== 'cal') return { err: m };
   const p = await __pickDT(month, day, hh, '00'); if (!p.banner || !p.banner.includes(String(+hh) + ':00')) return { err: 'banner', p };
-  const s = await __submit(); if (s !== 'scheduled') return { err: s }; await __sl(1000); return { ok: p.banner, open: await __open() };
+  const s = await __submit(); if (s !== 'scheduled') return { err: s }; await __sl(3000); return { ok: p.banner, open: __cnt() ? 'open' : await __open(), n: __cnt() };
 };
 }
 'threads helpers loaded';
