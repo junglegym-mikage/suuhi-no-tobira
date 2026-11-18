@@ -320,8 +320,44 @@ function drawGrid9(x, spec, t) {
   if (ctaA > 0) { txt(x, spec.cta1, W / 2, y, fit(x, spec.cta1, 48, F.sans), F.sans, K.ink, 'bold', 'center', ctaA); if (spec.cta2) txt(x, spec.cta2, W / 2, y + 65, fit(x, spec.cta2, 38, F.sans), F.sans, K.soft, '', 'center', ctaA); }
   txt(x, '数秘のとびら', W / 2, 1760, 40, F.serif, K.gold, 'bold', 'center', 0.9);
 }
+// type "table9": 9×9 の相性表（縦＝あなたの数・横＝相手の数。生まれた日を1桁にした数）。dur 8秒。2026-11-20〜（競合リサーチ 11/15 の「相性表」型）
+// spec: { type:'table9', h1, h2, h3, note:'数の出し方…', marks:[[9つ], ...9行]（'★'|'◎'|'○'|'△'）, legend:[[記号, 意味], ...], cta1, cta2 }
+function drawTable9(x, spec, t) {
+  bg(x); heads(x, spec, t, 190);
+  const cs = 90, gx = (W - cs * 10) / 2, gy = 560;
+  if (spec.note) txt(x, spec.note, W / 2, 495, fit(x, spec.note, 34, F.sans, 960), F.sans, K.soft, '', 'center', clamp((t - 0.4) / 0.3));
+  const ha = clamp((t - 0.6) / 0.3);
+  x.globalAlpha = ha; x.strokeStyle = K.line; x.lineWidth = 2;
+  x.beginPath(); x.moveTo(gx, gy); x.lineTo(gx + cs, gy + cs); x.stroke(); x.globalAlpha = 1;
+  txt(x, '相手', gx + cs * 0.68, gy + cs * 0.28, 22, F.sans, K.soft, 'bold', 'center', ha);
+  txt(x, 'あなた', gx + cs * 0.32, gy + cs * 0.74, 22, F.sans, K.soft, 'bold', 'center', ha);
+  for (let k = 1; k <= 9; k++) {
+    txt(x, String(k), gx + cs * k + cs / 2, gy + cs / 2, 50, F.serif, K.gold, 'bold', 'center', ha);
+    txt(x, String(k), gx + cs / 2, gy + cs * k + cs / 2, 50, F.serif, K.gold, 'bold', 'center', ha);
+  }
+  spec.marks.forEach((row, i) => {
+    const t0 = 1.0 + i * 0.3, a = clamp((t - t0) / 0.3), y = gy + cs * (i + 1);
+    if (i % 2 === 0) { x.globalAlpha = 0.35; x.fillStyle = K.line; x.fillRect(gx + cs, y, cs * 9, cs); x.globalAlpha = 1; }
+    if (a <= 0) return;
+    row.forEach((m, j) => {
+      const cx = gx + cs * (j + 1) + cs / 2, cy = y + cs / 2, star = m === '★';
+      if (star) { x.globalAlpha = 0.25 * a; x.fillStyle = K.gold; x.fillRect(cx - cs / 2 + 3, cy - cs / 2 + 3, cs - 6, cs - 6); x.globalAlpha = 1; }
+      txt(x, m, cx, cy + 2, star ? 58 : 50, F.sans, star ? K.gold : (m === '△' ? K.soft : K.ink), 'bold', 'center', a);
+    });
+  });
+  x.globalAlpha = 0.6; x.strokeStyle = K.line; x.lineWidth = 2; x.strokeRect(gx, gy, cs * 10, cs * 10); x.globalAlpha = 1;
+  const la = fade(t, 1.0 + 9 * 0.3 + 0.2), ly = gy + cs * 10 + 50;
+  (spec.legend || []).forEach(([m, s], i) => {
+    const col = i % 2, rr = Math.floor(i / 2), lx = 110 + col * 440, yy = ly + rr * 58;
+    txt(x, m, lx, yy, 40, F.sans, m === '★' ? K.gold : K.ink, 'bold', 'center', la);
+    txt(x, s, lx + 36, yy, fit(x, s, 32, F.sans, 380), F.sans, K.ink, '', 'left', la);
+  });
+  const ca = fade(t, 1.0 + 9 * 0.3 + 1.0), cy0 = ly + Math.ceil((spec.legend || []).length / 2) * 58 + 30;
+  if (ca > 0) { txt(x, spec.cta1, W / 2, cy0, fit(x, spec.cta1, 44, F.sans), F.sans, K.seal, 'bold', 'center', ca); if (spec.cta2) txt(x, spec.cta2, W / 2, cy0 + 58, fit(x, spec.cta2, 36, F.sans), F.sans, K.soft, '', 'center', ca); }
+  txt(x, '数秘のとびら', W / 2, 1800, 36, F.serif, K.gold, 'bold', 'center', 0.9);
+}
 const FEED = ['today', 'pair', 'card', 'aisho', 'year2026'];
-window.__reelDraw = (x, spec, t) => { if (spec.type === 'chart') drawChart(x, spec, t); else if (spec.type === 'pick') drawPick(x, spec, t); else if (spec.type === 'slides') drawSlides(x, spec, t); else if (spec.type === 'rank') drawRank(x, spec, t); else if (spec.type === 'grid9') drawGrid9(x, spec, t); else if (FEED.includes(spec.type)) drawFeed(x, spec, t); };
+window.__reelDraw = (x, spec, t) => { if (spec.type === 'chart') drawChart(x, spec, t); else if (spec.type === 'pick') drawPick(x, spec, t); else if (spec.type === 'slides') drawSlides(x, spec, t); else if (spec.type === 'rank') drawRank(x, spec, t); else if (spec.type === 'grid9') drawGrid9(x, spec, t); else if (spec.type === 'table9') drawTable9(x, spec, t); else if (FEED.includes(spec.type)) drawFeed(x, spec, t); };
 window.__reelCanvas = () => { let c = window.__rc; if (!c) { c = window.__rc = document.createElement('canvas'); c.width = W; c.height = H; } return c; };
 // 指定秒のコマを画面右上に小さく表示（確認用）。もう一度呼ぶと差し替え、null で消す。
 window.__reelPreview = (sec, spec = window.__reelSpec) => {
