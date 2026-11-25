@@ -4,7 +4,7 @@
   {"keyword": "数秘術 計算方法", "intent": "運命数の出し方を知りたい", "priority": 1, "status": "published", "slug": "how-to-calculate", "date": "2026-11-06"},
   {"keyword": "数秘術 2027年 運勢", "intent": "来年の流れを知りたい（11〜1月に検索が増える）", "priority": 1, "status": "published", "due": "2026-12-01", "links": ["../2027/index.html"], "slug": "numerology-2027", "date": "2026-11-11"},
   {"keyword": "個人年数 9 過ごし方", "intent": "しめくくりの年に何をすればいいか", "priority": 2, "status": "published", "due": "2026-12-15", "slug": "personal-year-9", "date": "2026-11-18", "links": ["../2026/9.html", "../2027/9.html"]},
-  {"keyword": "個人年数 1 始まりの年 2027", "intent": "2027年が始まりの年の人", "priority": 2, "status": "todo", "due": "2026-12-15"},
+  {"keyword": "個人年数 1 始まりの年 2027", "intent": "2027年が始まりの年の人", "priority": 2, "status": "published", "due": "2026-12-15", "slug": "personal-year-1-2027", "date": "2026-11-25", "links": ["../2027/1.html"]},
   {"keyword": "マスターナンバー 意味", "intent": "11・22・33の意味と特徴", "priority": 2, "status": "todo"},
   {"keyword": "ライフパスナンバー 運命数 違い", "intent": "呼び方の違いを知りたい", "priority": 3, "status": "todo"},
   {"keyword": "数秘術 相性 恋愛", "intent": "恋人・好きな人との相性の見方", "priority": 2, "status": "todo", "links": ["../compat/index.html"]},
@@ -22,6 +22,7 @@
   {"keyword": "数秘術 9年周期", "intent": "9年サイクルの考え方", "priority": 3, "status": "todo"},
   {"keyword": "数秘術 バレンタイン 相性", "intent": "季節もの（2月）", "priority": 3, "status": "todo", "due": "2027-01-25"},
   {"keyword": "ユニバーサルイヤー 2027 意味", "intent": "その年全体の数字（2027＝11/2）の読み方", "priority": 4, "status": "todo"},
-  {"keyword": "個人年数 8 過ごし方", "intent": "実りの年（2027年は誕生月日の合計が6の人）にすること", "priority": 4, "status": "todo"}
+  {"keyword": "個人年数 8 過ごし方", "intent": "実りの年（2027年は誕生月日の合計が6の人）にすること", "priority": 4, "status": "todo"},
+  {"keyword": "個人年数 2 育てる年 2027", "intent": "2027年が育てる年の人（2026年が1だった人・誕生月日の合計が9）", "priority": 4, "status": "todo"}
  ]
 }
